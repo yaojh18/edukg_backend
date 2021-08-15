@@ -17,6 +17,16 @@ public class ConnectedTestController {
         return "Access success!";
     }
 
+    /**
+     * 用于给安卓端测试GET
+     * method:Get
+     * url: localhost:8080/test_get
+     * @param name 想给的参数
+     * @return {
+     *     code: 200,
+     *     data: ”Get success“ + name
+     * }
+     */
     @ResponseBody
     @RequestMapping(value = "/test_get", method = RequestMethod.GET)
     public Map<String, Object> testGet(@RequestParam(value = "name", defaultValue = "default name") String name){
