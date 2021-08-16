@@ -11,6 +11,14 @@ import java.util.Map;
 
 @Controller
 public class ConnectedTestController {
+    @ResponseBody
+    @RequestMapping(value = "/test_access")
+    public Map<String, Object> testAccess(){
+        Map<String, Object> result = new HashMap<>();
+        result.put("code", 200);
+        result.put("data", "Get success ");
+        return result;
+    }
     /**
      * 用于给安卓端测试GET
      * method: Get <br>

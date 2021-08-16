@@ -28,6 +28,8 @@ public class OpenPlatformAPI {
     private String siteUrl;
     @Value("${site.userid}")
     private String userId;
+    @Value("#{${maps}}")
+    private Map<String, String> defaultSearchKey;
 
     /**
      * 使用post方法获取开放平台的结果，body类型限定为x-www-form-urlencoded
@@ -45,6 +47,15 @@ public class OpenPlatformAPI {
         return result;
     }
 
+
+    @ResponseBody
+    @RequestMapping(value="API/homeList")
+    public Map<String, Object> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
+        String searchKey = defaultSearchKey.get(course);
+        System.out.println(defaultSearchKey);
+        return this.instanceList(searchKey, course);
+    }
+
     /**
      * 检索实体，获取实体列表
      * method: Get <br>
@@ -59,11 +70,13 @@ public class OpenPlatformAPI {
      *     "result": [
      *       {
      *         "label": 搜索到的实体名称1,
-     *         "category": 搜索到的实体所属类1
+     *         "category": 搜索到的实体所属类1,
+     *         "course": 所属学科
      *       },
      *       {
      *         "label": 搜索到的实体名称2,
-     *         "category":搜索到的实体所属类2
+     *         "category":搜索到的实体所属类2,
+     *         "course":所属学科
      *       },
      *       ...
      *     ],
@@ -91,6 +104,7 @@ public class OpenPlatformAPI {
         List<Map<String, Object>> result_data = (List<Map<String, Object>>) result.get("data");
         for(Map<String, Object> element: result_data){
             element.remove("uri");
+            element.put("course", course);
         }
 
         Map<String, Object> response = new HashMap<>();
@@ -117,7 +131,8 @@ public class OpenPlatformAPI {
      *         "entity_type": 实体类型,
      *         "start_index": 该实体在段落中的开始位置,
      *         "end_index": 该实体在段落中的结束位置,
-     *         "entity": 实体名称
+     *         "entity": 实体名称,
+     *         "course": 所属学科
      *       },
      *       ...
      *     ],
@@ -143,6 +158,7 @@ public class OpenPlatformAPI {
                 (List<Map<String, Object>>) (((Map<String, Object>)result.get("data")).get("results"));
         for(Map<String, Object> element: result_data){
             element.remove("entity_url");
+            element.put("course", course);
         }
 
         Map<String, Object> response = new HashMap<>();
