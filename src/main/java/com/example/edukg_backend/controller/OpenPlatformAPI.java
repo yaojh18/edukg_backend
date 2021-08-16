@@ -31,6 +31,7 @@ public class OpenPlatformAPI {
 
     /**
      * 使用post方法获取开放平台的结果，body类型限定为x-www-form-urlencoded
+     * 后端自己用的
      * @param param_map body的内容，key-value
      * @param url api的url
      * @return api的返回结果
@@ -46,27 +47,27 @@ public class OpenPlatformAPI {
 
     /**
      * 检索实体，获取实体列表
-     * method:Get
+     * method: Get <br>
      * url: localhost:8080/API/instanceList
      * @param searchKey 需要搜索的关键词
      * @param course 搜索的学科，chinese/english/math/physics/chemistry/biology/history/geo/politics,
      *               default为chinese(之后可能加入all）
-     * @return JSON，见下
+     * @return JSON<br>
      * {
-     *   "code": <200表示成功，其他尚未定义>,
+     *   "code": 200表示成功，其他尚未定义,
      *   "data": {
      *     "result": [
      *       {
-     *         "label": <搜索到的实体名称1>,
-     *         "category": <搜索到的实体所属类1>
+     *         "label": 搜索到的实体名称1,
+     *         "category": 搜索到的实体所属类1
      *       },
      *       {
-     *         "label": <搜索到的实体名称2>,
-     *         "category":<搜索到的实体所属类2>
+     *         "label": 搜索到的实体名称2,
+     *         "category":搜索到的实体所属类2
      *       },
      *       ...
      *     ],
-     *     "result_size": <搜索到的实体数量>
+     *     "result_size": 搜索到的实体数量
      *   }
      * }
      *
@@ -103,24 +104,24 @@ public class OpenPlatformAPI {
 
     /**
      * 实体链接，识别出一段输入文本中含有的基础教育知识点
-     * url：localhost:8080/API/linkInstance
-     * method:Get
+     * method: Get <br>
+     * url: localhost:8080/API/linkInstance
      * @param context  需要识别的文本
      * @param course  所属的学科
      * @return JSON
      * {
-     *   "code": <200表示成功>,
+     *   "code": 200表示成功,
      *   "data": {
      *     "result": [
      *       {
-     *         "entity_type": <实体类型>,
-     *         "start_index": <该实体在段落中的开始位置>,
-     *         "end_index": <该实体在段落中的结束位置>,
-     *         "entity": <实体名称>
+     *         "entity_type": 实体类型,
+     *         "start_index": 该实体在段落中的开始位置,
+     *         "end_index": 该实体在段落中的结束位置,
+     *         "entity": 实体名称
      *       },
      *       ...
      *     ],
-     *     "result_size": <实体数量>
+     *     "result_size": 实体数量
      *   }
      * }
      */
@@ -156,15 +157,15 @@ public class OpenPlatformAPI {
 
     /**
      * 问答接口
-     * method:Get
+     * method: Get <br>
      * url: localhost:8080/API/inputQuestion
      * @param inputQuestion 提出的问题
      * @param course 所属的学科，非必需，但经过测试对结果影响很大
      * @return JSON
      * {
-     *   "code": <200表示成功>,
+     *   "code": 200表示成功,
      *   "data": {
-     *     "result": <有答案返回答案，否则返回"此问题没有找到答案！">
+     *     "result": 有答案返回答案，否则返回"此问题没有找到答案！"
      *   }
      * }
      */

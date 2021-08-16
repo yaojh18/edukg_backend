@@ -11,15 +11,9 @@ import java.util.Map;
 
 @Controller
 public class ConnectedTestController {
-    @ResponseBody
-    @RequestMapping("/test_access")
-    public String testAccess(){
-        return "Access success!";
-    }
-
     /**
      * 用于给安卓端测试GET
-     * method:Get
+     * method: Get <br>
      * url: localhost:8080/test_get
      * @param name 想给的参数
      * @return {

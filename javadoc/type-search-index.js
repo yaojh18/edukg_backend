@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"ConnectedTestController","h":"","u":""},{"l":"EdukgBackendApplication","h":"","u":""},{"l":"OpenPlatformAPI","h":"","u":""},{"l":"所有类","h":"","u":"allclasses-index.html"}]
