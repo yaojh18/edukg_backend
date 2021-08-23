@@ -15,10 +15,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
 import org.springframework.http.HttpHeaders;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 
 @Controller
@@ -210,6 +208,122 @@ public class OpenPlatformAPI {
         Map<String, Object> response_data = new HashMap<>();
         response_data.put("result", question_answer);
         response.put("code", 200);
+        response.put("data", response_data);
+        return response;
+    }
+
+    /**
+     * 实体详情页接口
+     * method: Get <br>
+     * url: localhost:8080/API/infoByInstanceName
+     * @param name 要获取详情的实体名称
+     * @param course 所属的学科，非必需，但经过测试对结果影响很大
+     * @return JSON，以下为name=李商隐&course=chinese搜的response
+     *{
+     *   "code": 200,
+     *   "data": {
+     *     "property": [
+     *       {
+     *         "predicateLabel": "死亡日期",
+     *         "object": "约858"
+     *       },
+     *       {
+     *         "predicateLabel": "字",
+     *         "object": "义山"
+     *       },
+     *       ...
+     *     ],
+     *     "description": "（约813—约858）　唐代诗人。字义山，号玉溪生，怀州河内（现河南沁阳）人。其诗揭露和批判当时藩镇割据、宦官擅权和上层
+     *     统治集团的腐朽糜烂，《行次西郊作一百韵》《有感二首》《重有感》等皆著名；...。",
+     *     "relationship": [
+     *       {
+     *         "predicate_label": "主要作品",
+     *         "object_label": "《锦瑟》",
+     *         "course": "chinese"
+     *       },
+     *       {
+     *         "subject_label": "无　题",
+     *         "predicate_label": "作者",
+     *         "course": "chinese"
+     *       },
+     *       ...
+     *     ],
+     *     "questionList": [
+     *       {
+     *         "qAnswer": "D",
+     *         "id": 184710,
+     *         "qBody": "写下君不见黄河之水天上来,奔流到海不复回诗句的是()A.杜牧B.李商隐C.杜甫D.李白"
+     *       },
+     *       {
+     *         "qAnswer": "B",
+     *         "id": 190902,
+     *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()A.李白B.杜甫C.白居易D.李商隐"
+     *       },
+     *       ...
+     *     ]
+     *   }
+     * }
+     */
+    @ResponseBody
+    @RequestMapping(value="/API/infoByInstanceName", method=RequestMethod.GET)
+    public Map<String, Object> infoByInstanceName(
+            @RequestParam(value="name") String name,
+            @RequestParam(value="course") String course){
+        //传入参数并发出get请求
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userId);
+        param_map.put("name", name);
+        param_map.put("course", course);
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object>result = restTemplate.getForObject(
+                siteUrl + "/infoByInstanceName?id={id}&name={name}&course={course}",
+                Map.class,
+                param_map);
+
+        Map<String, Object> response_data = new HashMap<>();
+        Map<String, Object> result_data = (Map<String, Object>) result.get("data");
+        response_data.put("description", "");
+        List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
+        System.out.println(property);
+        Iterator<Map<String, Object>> it = property.iterator();
+        while(it.hasNext()){
+            Map<String, Object> element = it.next();
+            if(element.get("predicateLabel").equals("内容")) {
+                response_data.put("description", element.get("object"));
+                it.remove();
+            }
+            else if(element.get("objectLabel") != null){
+                element.put("object", element.get("objectLabel"));
+                element.remove("objectLabel");
+                element.remove("predicate");
+            }
+            else if( ((String)element.get("object")).startsWith("http")){
+               it.remove();
+            }
+            else {
+                element.remove("predicate");
+            }
+        }
+
+        List<Map<String, Object>> relationship = (List<Map<String, Object>>) result_data.get("content");
+        System.out.println(relationship);
+        for(Map<String, Object> element: relationship){
+            element.remove("predicate");
+            element.remove("object");
+            element.remove("subject");
+            element.put("course", course);
+        }
+
+        response_data.put("property", property);
+        response_data.put("relationship", relationship);
+        Map<String, Object>questionList = restTemplate.getForObject(
+                siteUrl + "/questionListByUriName?id={id}&uriName={name}",
+                Map.class,
+                param_map);
+        Map<String, Object> response = new HashMap<>();
+        response_data.put("questionList", questionList.get("data"));
+        response.put("code", 200);
+        response.put("data", response_data);
         response.put("data", response_data);
         return response;
     }
