@@ -198,10 +198,11 @@ public class OpenPlatformAPI {
         }
         String url = siteUrl + "/inputQuestion";
         Map<String, Object> result = getPostResult(param_map, url);
+        System.out.println(result);
 
         Map<String, String> result_data = ((List<Map<String, String>>)result.get("data")).get(0);
         String question_answer;
-        if(result_data.get("message").equals("此问题没有找到答案！"))
+        if(result_data.get("value").isEmpty())
             question_answer = "此问题没有找到答案！";
         else
             question_answer = result_data.get("value");
