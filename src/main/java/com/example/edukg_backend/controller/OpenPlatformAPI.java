@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.HttpHeaders;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Controller
@@ -256,8 +258,11 @@ public class OpenPlatformAPI {
      *       },
      *       {
      *         "qAnswer": "B",
-     *         "id": 190902,
-     *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()A.李白B.杜甫C.白居易D.李商隐"
+     *         "A": "李白",
+     *         "B": "杜甫",
+     *         "C": "白居易“，
+     *         ”D": "李商隐",
+     *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()"
      *       },
      *       ...
      *     ]
@@ -284,7 +289,6 @@ public class OpenPlatformAPI {
         Map<String, Object> result_data = (Map<String, Object>) result.get("data");
         response_data.put("description", "");
         List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
-        System.out.println(property);
         Iterator<Map<String, Object>> it = property.iterator();
         while(it.hasNext()){
             Map<String, Object> element = it.next();
@@ -306,7 +310,6 @@ public class OpenPlatformAPI {
         }
 
         List<Map<String, Object>> relationship = (List<Map<String, Object>>) result_data.get("content");
-        System.out.println(relationship);
         for(Map<String, Object> element: relationship){
             element.remove("predicate");
             element.remove("object");
@@ -316,12 +319,28 @@ public class OpenPlatformAPI {
 
         response_data.put("property", property);
         response_data.put("relationship", relationship);
-        Map<String, Object>questionList = restTemplate.getForObject(
+        Map<String, Object>questionResult = restTemplate.getForObject(
                 siteUrl + "/questionListByUriName?id={id}&uriName={name}",
                 Map.class,
                 param_map);
+        List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
+        Pattern p = Pattern.compile("(.*)A\\.(.*)B\\.(.*)C\\.(.*)D\\.(.*)");
+
+        for(Map<String, Object> element: questionList){
+            element.remove("id");
+            String questionBody = (String)element.get("qBody");
+            Matcher m = p.matcher(questionBody);
+            if(m.find()) {
+                element.put("qBody", m.group(1));
+                element.put("A", m.group(2));
+                element.put("B", m.group(3));
+                element.put("C", m.group(4));
+                element.put("D", m.group(5));
+            }
+
+        }
         Map<String, Object> response = new HashMap<>();
-        response_data.put("questionList", questionList.get("data"));
+        response_data.put("questionList", questionList);
         response.put("code", 200);
         response.put("data", response_data);
         response.put("data", response_data);
