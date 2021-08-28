@@ -52,7 +52,6 @@ public class OpenPlatformAPI {
     @RequestMapping(value="API/homeList")
     public Map<String, Object> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
         String searchKey = defaultSearchKey.get(course);
-        System.out.println(defaultSearchKey);
         return this.instanceList(searchKey, course);
     }
 
@@ -198,7 +197,6 @@ public class OpenPlatformAPI {
         }
         String url = siteUrl + "/inputQuestion";
         Map<String, Object> result = getPostResult(param_map, url);
-        System.out.println(result);
 
         Map<String, String> result_data = ((List<Map<String, String>>)result.get("data")).get(0);
         String question_answer;
@@ -221,7 +219,7 @@ public class OpenPlatformAPI {
      * url: localhost:8080/API/infoByInstanceName
      * @param name 要获取详情的实体名称
      * @param course 所属的学科，非必需，但经过测试对结果影响很大
-     * @return JSON，以下为name=李商隐&course=chinese搜的response
+     * @return JSON，
      *{
      *   "code": 200,
      *   "data": {
