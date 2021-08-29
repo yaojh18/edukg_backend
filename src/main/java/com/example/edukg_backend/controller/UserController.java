@@ -26,7 +26,7 @@ public class UserController {
      * @param userName 用户名
      * @param password 密码
      * @return JSON<br>
-     * status code:200注册成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200注册成功, 401失败（原因见msg）， 400请求参数有误，500后端出错<br>
      * <pre>
      * {
      *     code:200表示登录成功，401表示登录失败
@@ -50,11 +50,12 @@ public class UserController {
      * @param userName 用户名
      * @param password 密码
      * @return JSON<br>
-     * status code:200注册成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200注册成功, 401失败（原因见msg）， 400请求参数有误，500后端出错<br>
      * <pre>
      * {
      *     code:200表示注册成功，401表示失败
      *     msg:成功返回"登录成功“，失败返回"用户名已被使用“
+     *     token: 仅登陆成功时有此项
      * }
      * </pre>
      */
@@ -76,7 +77,7 @@ public class UserController {
      * @param newPassword 新密码
      * @return JSON<br>
      * <pre>
-     * status code:200注册成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200注册成功, 401失败（原因见msg）， 400请求参数有误，500后端出错<br>
      * {
      *     code:200表示修改成功，401表示修改失败
      *     msg:成功返回"修改录成功“，失败返回"用户不存在"或”原密码错误“或”token为空“

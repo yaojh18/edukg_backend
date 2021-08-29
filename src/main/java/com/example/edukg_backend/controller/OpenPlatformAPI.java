@@ -57,7 +57,7 @@ public class OpenPlatformAPI {
      * </pre>
      * @param course 学科
      * @return JSON<br>
-     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200成功, 400请求参数有误，500后端出错<br>
      * <pre>
      * {
      *   "code": 200表示成功
@@ -161,7 +161,7 @@ public class OpenPlatformAPI {
      * @param context  需要识别的文本
      * @param course  所属的学科
      * @return JSON<br>
-     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200成功, 400请求参数有误，500后端出错<br>
      * <pre>
      * {
      *   "code": 200表示成功,
@@ -223,7 +223,7 @@ public class OpenPlatformAPI {
      * @param inputQuestion 提出的问题
      * @param course 所属的学科，非必需，但经过测试对结果影响很大
      * @return JSON<br>
-     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * status code:200成功, 400请求参数有误，500后端出错<br>
      * <pre>
      * {
      *   "code": 200表示成功,
