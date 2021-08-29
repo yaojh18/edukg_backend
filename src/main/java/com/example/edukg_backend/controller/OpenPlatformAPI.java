@@ -33,7 +33,7 @@ import java.util.regex.Pattern;
 public class OpenPlatformAPI {
     @Value("${site.url}")
     private String siteUrl;
-    @Value("${site.userid}")
+    // @Value("${site.userid}")
     private String userId;
     @Value("#{${maps}}")
     private Map<String, String> defaultSearchKey;
@@ -56,6 +56,9 @@ public class OpenPlatformAPI {
         return result;
     }
 
+    public void setUserId(String userId){
+        this.userId = userId;
+    }
     /**
      * <pre>
      * 获取首页实体列表
