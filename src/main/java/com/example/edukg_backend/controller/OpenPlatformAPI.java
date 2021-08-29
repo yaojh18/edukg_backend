@@ -379,6 +379,7 @@ public class OpenPlatformAPI {
         }
         else{
             response_data.put("isFavorite", userService.checkFavorites(token, name, course));
+            userService.addHistories(token, name, course);
         }
         response_data.put("property", property);
         response_data.put("relationship", relationship);

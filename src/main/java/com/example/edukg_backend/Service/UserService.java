@@ -126,6 +126,7 @@ public class UserService {
                 CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
                 User user = userOptional.get();
                 user.addHistories(courseInstance);
+                userRepository.save(user);
                 result.put("msg", "历史添加成功");
                 httpStatus = HttpStatus.OK;
             }
