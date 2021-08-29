@@ -5,6 +5,8 @@ import com.alibaba.fastjson.JSON;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -47,7 +49,37 @@ public class OpenPlatformAPI {
         return result;
     }
 
-
+    /**
+     * <pre>
+     * 获取首页实体列表
+     * method: GET
+     * url: localhost:8080/API/homeList
+     * </pre>
+     * @param course 学科
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
+     * {
+     *   "code": 200表示成功
+     *   "data": {
+     *     "result": [
+     *       {
+     *         "label": 实体名称1,
+     *         "category": 实体所属类1,
+     *         "course": 所属学科
+     *       },
+     *       {
+     *         "label": 搜索到的实体名称2,
+     *         "category":搜索到的实体所属类2,
+     *         "course":所属学科
+     *       },
+     *       ...
+     *     ],
+     *     "result_size": 搜索到的实体数量
+     *   }
+     * }
+     * </pre>
+     */
     @ResponseBody
     @RequestMapping(value="API/homeList")
     public Map<String, Object> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
@@ -56,15 +88,19 @@ public class OpenPlatformAPI {
     }
 
     /**
+     * <pre>
      * 检索实体，获取实体列表
-     * method: Get <br>
+     * method: Get
      * url: localhost:8080/API/instanceList
+     * </pre>
      * @param searchKey 需要搜索的关键词
      * @param course 搜索的学科，chinese/english/math/physics/chemistry/biology/history/geo/politics,
      *               default为chinese(之后可能加入all）
      * @return JSON<br>
+     * status code:200成功, 400请求参数有误，500后端出错<br>
+     * <pre>
      * {
-     *   "code": 200表示成功，其他尚未定义,
+     *   "code": 200表示成功
      *   "data": {
      *     "result": [
      *       {
@@ -82,7 +118,7 @@ public class OpenPlatformAPI {
      *     "result_size": 搜索到的实体数量
      *   }
      * }
-     *
+     * </pre>
      */
     @ResponseBody
     @RequestMapping(value="/API/instanceList", method = RequestMethod.GET)
@@ -90,38 +126,43 @@ public class OpenPlatformAPI {
             @RequestParam(value="searchKey")String searchKey,
             @RequestParam(value="course", defaultValue = "chinese")String course){
         //传入参数并发出get请求
-        Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userId);
-        param_map.put("searchKey", searchKey);
-        param_map.put("course", course);
-        RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object>result = restTemplate.getForObject(
-                siteUrl + "/instanceList?id={id}&searchKey={searchKey}&course={course}",
-                Map.class,
-                param_map);
-        //清除结果中的uri
-        List<Map<String, Object>> result_data = (List<Map<String, Object>>) result.get("data");
-        for(Map<String, Object> element: result_data){
-            element.remove("uri");
-            element.put("course", course);
-        }
+            Map<String, String> param_map = new HashMap<>();
+            param_map.put("id", userId);
+            param_map.put("searchKey", searchKey);
+            param_map.put("course", course);
+            RestTemplate restTemplate = new RestTemplate();
+            Map<String, Object> result = restTemplate.getForObject(
+                    siteUrl + "/instanceList?id={id}&searchKey={searchKey}&course={course}",
+                    Map.class,
+                    param_map);
+            //清除结果中的uri
+            List<Map<String, Object>> result_data = (List<Map<String, Object>>) result.get("data");
+            for (Map<String, Object> element : result_data) {
+                element.remove("uri");
+                element.put("course", course);
+            }
 
-        Map<String, Object> response = new HashMap<>();
-        Map<String, Object> response_data = new HashMap<>();
-        response_data.put("result", result_data);
-        response_data.put("result_size", result_data.size());
-        response.put("code", 200);
-        response.put("data", response_data);
-        return response;
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> response_data = new HashMap<>();
+            response_data.put("result", result_data);
+            response_data.put("result_size", result_data.size());
+            response.put("code", 200);
+            response.put("data", response_data);
+            return response;
+
     }
 
     /**
-     * 实体链接，识别出一段输入文本中含有的基础教育知识点
-     * method: Get <br>
+     *
+     * <pre>实体链接，识别出一段输入文本中含有的基础教育知识点
+     * method: Get
      * url: localhost:8080/API/linkInstance
+     * </pre>
      * @param context  需要识别的文本
      * @param course  所属的学科
-     * @return JSON
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
      * {
      *   "code": 200表示成功,
      *   "data": {
@@ -138,51 +179,59 @@ public class OpenPlatformAPI {
      *     "result_size": 实体数量
      *   }
      * }
+     * </pre>
      */
     @ResponseBody
     @RequestMapping(value="/API/linkInstance", method = RequestMethod.GET)
     public Map<String, Object> linkInstance(
             @RequestParam(value="context")String context,
             @RequestParam(value="course", required = false)String course){
-        MultiValueMap<String, Object> param_map = new LinkedMultiValueMap<>();
-        param_map.add("id", userId);
-        param_map.add("context", context);
-        String url = siteUrl + "/linkInstance";
-        if(course != null){
-            param_map.add("course", course);
-        }
-        Map<String, Object> result = getPostResult(param_map, url);
+        //try {
+            MultiValueMap<String, Object> param_map = new LinkedMultiValueMap<>();
+            param_map.add("id", userId);
+            param_map.add("context", context);
+            String url = siteUrl + "/linkInstance";
+            if (course != null) {
+                param_map.add("course", course);
+            }
+            Map<String, Object> result = getPostResult(param_map, url);
 
-        List<Map<String, Object>> result_data =
-                (List<Map<String, Object>>) (((Map<String, Object>)result.get("data")).get("results"));
-        for(Map<String, Object> element: result_data){
-            element.remove("entity_url");
-            element.put("course", course);
-        }
+            List<Map<String, Object>> result_data =
+                    (List<Map<String, Object>>) (((Map<String, Object>) result.get("data")).get("results"));
+            for (Map<String, Object> element : result_data) {
+                element.remove("entity_url");
+                element.put("course", course);
+            }
 
-        Map<String, Object> response = new HashMap<>();
-        Map<String, Object> response_data = new HashMap<>();
-        response_data.put("result", result_data);
-        response_data.put("result_size", result_data.size());
-        response.put("code", 200);
-        response.put("data", response_data);
-        return response;
+            Map<String, Object> response = new HashMap<>();
+            Map<String, Object> response_data = new HashMap<>();
+            response_data.put("result", result_data);
+            response_data.put("result_size", result_data.size());
+            response.put("code", 200);
+            response.put("data", response_data);
+            return response;
+        //}
     }
 
 
     /**
+     * <pre>
      * 问答接口
-     * method: Get <br>
+     * method: Get
      * url: localhost:8080/API/inputQuestion
+     * </pre>
      * @param inputQuestion 提出的问题
      * @param course 所属的学科，非必需，但经过测试对结果影响很大
-     * @return JSON
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
      * {
      *   "code": 200表示成功,
      *   "data": {
      *     "result": 有答案返回答案，否则返回"此问题没有找到答案！"
      *   }
      * }
+     * </pre>
      */
     @ResponseBody
     @RequestMapping(value="/API/inputQuestion", method=RequestMethod.GET)
@@ -214,12 +263,16 @@ public class OpenPlatformAPI {
     }
 
     /**
+     * <pre>
      * 实体详情页接口
-     * method: Get <br>
+     * method: Get
      * url: localhost:8080/API/infoByInstanceName
+     * </pre>
      * @param name 要获取详情的实体名称
      * @param course 所属的学科，非必需，但经过测试对结果影响很大
-     * @return JSON，
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
      *{
      *   "code": 200,
      *   "data": {
@@ -251,22 +304,18 @@ public class OpenPlatformAPI {
      *     ],
      *     "questionList": [
      *       {
-     *         "qAnswer": "D",
-     *         "id": 184710,
-     *         "qBody": "写下君不见黄河之水天上来,奔流到海不复回诗句的是()A.杜牧B.李商隐C.杜甫D.李白"
-     *       },
-     *       {
      *         "qAnswer": "B",
      *         "A": "李白",
      *         "B": "杜甫",
      *         "C": "白居易“，
-     *         ”D": "李商隐",
+     *         "D": "李商隐",
      *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()"
      *       },
      *       ...
      *     ]
      *   }
      * }
+     * </pre>
      */
     @ResponseBody
     @RequestMapping(value="/API/infoByInstanceName", method=RequestMethod.GET)
@@ -318,6 +367,52 @@ public class OpenPlatformAPI {
 
         response_data.put("property", property);
         response_data.put("relationship", relationship);
+        Map<String, Object> response = new HashMap<>();
+        response_data.put("questionList", questionList(name, course).get("data"));
+        response.put("code", 200);
+        response.put("data", response_data);
+        return response;
+    }
+
+
+    /**
+     * <pre>
+     * 实体详情页接口
+     * method: Get
+     * url: localhost:8080/API/questionList
+     * </pre>
+     * @param name 要获取试题的实体名称
+     * @param course 所属的学科，非必需，但经过测试对结果影响很大
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
+     *{
+     *     "code": 200,
+     *     "data": [
+     *       {
+     *         "qAnswer": "B",
+     *         "A": "李白",
+     *         "B": "杜甫",
+     *         "C": "白居易“，
+     *         "D": "李商隐",
+     *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()"
+     *       },
+     *       ...
+     *     ]
+     * }
+     * </pre>
+     */
+    @ResponseBody
+    @RequestMapping(value="/API/questionList", method=RequestMethod.GET)
+    public Map<String, Object> questionList(
+            @RequestParam(value="name") String name,
+            @RequestParam(value="course") String course){
+        //传入参数并发出get请求
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userId);
+        param_map.put("name", name);
+        param_map.put("course", course);
+        RestTemplate restTemplate = new RestTemplate();
         Map<String, Object>questionResult = restTemplate.getForObject(
                 siteUrl + "/questionListByUriName?id={id}&uriName={name}",
                 Map.class,
@@ -325,7 +420,9 @@ public class OpenPlatformAPI {
         List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
         Pattern p = Pattern.compile("(.*)A\\.(.*)B\\.(.*)C\\.(.*)D\\.(.*)");
 
-        for(Map<String, Object> element: questionList){
+        Iterator<Map<String, Object>> question_iterator = questionList.iterator();
+        while(question_iterator.hasNext()){
+            Map<String, Object> element = question_iterator.next();
             element.remove("id");
             String questionBody = (String)element.get("qBody");
             Matcher m = p.matcher(questionBody);
@@ -336,14 +433,13 @@ public class OpenPlatformAPI {
                 element.put("C", m.group(4));
                 element.put("D", m.group(5));
             }
-
+            else{
+                question_iterator.remove();
+            }
         }
         Map<String, Object> response = new HashMap<>();
-        response_data.put("questionList", questionList);
         response.put("code", 200);
-        response.put("data", response_data);
-        response.put("data", response_data);
+        response.put("data", questionList);
         return response;
     }
-
 }

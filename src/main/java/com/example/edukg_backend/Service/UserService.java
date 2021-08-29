@@ -6,12 +6,16 @@ import com.example.edukg_backend.Repositories.UserRepository;
 import com.example.edukg_backend.Util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 
 @Service
 public class UserService {
@@ -22,32 +26,35 @@ public class UserService {
     @Autowired
     InstanceService instanceService;
 
-    public Map<String, Object> login(String userName, String password){
+    public ResponseEntity<Map<String, Object>> login(String userName, String password){
         User user = userRepository.findByUserName(userName);
         Map<String, Object>result = new HashMap<>();
+        HttpStatus httpStatus;
         if(user == null) {
            result.put("msg", "用户不存在");
            result.put("token", "");
-           result.put("code", 401);
+           httpStatus = HttpStatus.UNAUTHORIZED;
         }
         else if(!(user.getPassword().equals(password))){
             result.put("msg", "密码错误");
             result.put("token", "");
-            result.put("code", 401);
+           httpStatus = HttpStatus.UNAUTHORIZED;
         }
         else{
             result.put("msg", "登录成功");
             result.put("token", jwtUtil.createToken(Long.toString(user.getId())));
-            result.put("code", 200);
+            httpStatus = HttpStatus.OK;
         }
-        return  result;
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
     }
 
-    public Map<String, Object> changePassword(String token, String oldPassword, String newPassword){
+    public ResponseEntity<Map<String, Object>> changePassword(String token, String oldPassword, String newPassword){
         Map<String, Object>result = new HashMap<>();
+        HttpStatus httpStatus;
         if(StringUtils.isEmpty(token)){
             result.put("msg", "token为空");
-            result.put("code", 401);
+            httpStatus = HttpStatus.UNAUTHORIZED;
         }
         else{
             Claims claims = jwtUtil.getTokenClaim(token);
@@ -55,7 +62,7 @@ public class UserService {
             Optional<User> userOptional = userRepository.findById(id);
             if(!userOptional.isPresent()){
                 result.put("msg", "用户不存在");
-                result.put("code", 401);
+                httpStatus = HttpStatus.UNAUTHORIZED;
             }
             else {
                 User user = userOptional.get();
@@ -63,15 +70,16 @@ public class UserService {
                     user.setPassword(newPassword);
                     userRepository.save(user);
                     result.put("msg", "修改成功");
-                    result.put("code", 200);
+                    httpStatus = HttpStatus.OK;
                 }
                 else{
                     result.put("msg", "原密码错误");
-                    result.put("code", 401);
+                    httpStatus = HttpStatus.UNAUTHORIZED;
                 }
             }
         }
-        return result;
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
     }
 
     public boolean isDuplicateUserName(String userName){
@@ -79,11 +87,12 @@ public class UserService {
         return user != null ;
     }
 
-    public Map<String, Object> register(String userName, String password){
+    public ResponseEntity<Map<String, Object>> register(String userName, String password){
         Map<String, Object>result = new HashMap<>();
+        HttpStatus httpStatus;
         if(isDuplicateUserName(userName)) {
             result.put("msg", "用户名已被使用");
-            result.put("code", 401);
+            httpStatus = HttpStatus.UNAUTHORIZED;
         }
         else {
             User newUser = new User();
@@ -91,9 +100,11 @@ public class UserService {
             newUser.setPassword(password);
             userRepository.save(newUser);
             result.put("msg", "注册成功");
-            result.put("code", 200);
+            httpStatus = HttpStatus.OK;
+            result.put("token", jwtUtil.createToken(Long.toString(newUser.getId())));
         }
-        return result;
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
     }
 
     public void addHistories(String token, String instanceName, String course){
