@@ -107,23 +107,149 @@ public class UserService {
         return  ResponseEntity.status(httpStatus).body(result);
     }
 
-    public void addHistories(String token, String instanceName, String course){
-        CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
+    public ResponseEntity<Map<String, Object>> addHistories(String token, String instanceName, String course){
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        if(StringUtils.isEmpty(token)){
+            result.put("msg", "token为空");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else{
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(id);
+            if(!userOptional.isPresent()){
+                result.put("msg", "用户不存在");
+                httpStatus = HttpStatus.UNAUTHORIZED;
+            }
+            else {
+                CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
+                User user = userOptional.get();
+                user.addHistories(courseInstance);
+                result.put("msg", "历史添加成功");
+                httpStatus = HttpStatus.OK;
+            }
+        }
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
+    }
+
+    public ResponseEntity<Map<String, Object>> addFavorites(String token, String instanceName, String course){
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        if(StringUtils.isEmpty(token)){
+            result.put("msg", "token为空");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else{
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(id);
+            if(!userOptional.isPresent()){
+                result.put("msg", "用户不存在");
+                httpStatus = HttpStatus.UNAUTHORIZED;
+            }
+            else {
+                CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
+                User user = userOptional.get();
+                user.addFavorites(courseInstance);
+                userRepository.save(user);
+                result.put("msg", "收藏添加成功");
+
+                httpStatus = HttpStatus.OK;
+            }
+        }
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
+    }
+
+    public boolean checkFavorites(String token, String instanceName, String course){
         Claims claims = jwtUtil.getTokenClaim(token);
         Long id = Long.parseLong(claims.getSubject());
         Optional<User> userOptional = userRepository.findById(id);
-        userOptional.ifPresent(user -> user.addHistories(courseInstance));
-    }
-
-    public void addFavorites(String token, String instanceName, String course){
-        CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
-        Claims claims = jwtUtil.getTokenClaim(token);
-        Long id = Long.parseLong(claims.getSubject());
-        Optional<User> userOptional = userRepository.findById(id);
-        userOptional.ifPresent(user -> user.addFavorites(courseInstance));
-    }
-
-    public boolean checkFavorites(){
+        if(userOptional.isPresent()) {
+            User user = userOptional.get();
+            return user.getFavorites().contains(instanceService.findOrAddInstance(instanceName, course));
+        }
         return false;
+
+    }
+
+    public ResponseEntity<Map<String, Object>> deleteFavorites(String token, String instanceName, String course) {
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        if(StringUtils.isEmpty(token)){
+            result.put("msg", "token为空");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else{
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(id);
+            if(!userOptional.isPresent()){
+                result.put("msg", "用户不存在");
+                httpStatus = HttpStatus.UNAUTHORIZED;
+            }
+            else {
+                CourseInstance courseInstance = instanceService.findOrAddInstance(instanceName, course);
+                User user = userOptional.get();
+                user.deleteFavorites(courseInstance);
+                userRepository.save(user);
+                result.put("msg", "收藏删除成功");
+                httpStatus = HttpStatus.OK;
+            }
+        }
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
+    }
+
+    public ResponseEntity<Map<String, Object>> getFavoritesList(String token) {
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        if(StringUtils.isEmpty(token)){
+            result.put("msg", "token为空");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else{
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(id);
+            if(!userOptional.isPresent()){
+                result.put("msg", "用户不存在");
+                httpStatus = HttpStatus.UNAUTHORIZED;
+            }
+            else {
+                User user = userOptional.get();
+                result.put("data", user.getFavorites());
+                httpStatus = HttpStatus.OK;
+            }
+        }
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
+    }
+
+    public ResponseEntity<Map<String, Object>> getHistoriesList(String token) {
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        if(StringUtils.isEmpty(token)){
+            result.put("msg", "token为空");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else{
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            Optional<User> userOptional = userRepository.findById(id);
+            if(!userOptional.isPresent()){
+                result.put("msg", "用户不存在");
+                httpStatus = HttpStatus.UNAUTHORIZED;
+            }
+            else {
+                User user = userOptional.get();
+                result.put("data", user.getHistories());
+                httpStatus = HttpStatus.OK;
+            }
+        }
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
     }
 }

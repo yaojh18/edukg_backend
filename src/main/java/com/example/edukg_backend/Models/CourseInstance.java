@@ -1,5 +1,6 @@
 package com.example.edukg_backend.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -18,8 +19,10 @@ public class CourseInstance {
     private String instanceName;
     private String course;
     private int accessCount;
+    @JsonIgnore
     @ManyToMany(mappedBy = "histories")
     private Set<User> visitors = new HashSet<>();
+    @JsonIgnore
     @ManyToMany(mappedBy = "favorites")
     private  Set<User> lovers = new HashSet<>();
 

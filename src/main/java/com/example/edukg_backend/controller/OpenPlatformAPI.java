@@ -2,6 +2,10 @@ package com.example.edukg_backend.controller;
 
 
 import com.alibaba.fastjson.JSON;
+import com.example.edukg_backend.Models.User;
+import com.example.edukg_backend.Service.UserService;
+import io.jsonwebtoken.Claims;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpEntity;
@@ -10,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -32,6 +37,8 @@ public class OpenPlatformAPI {
     private String userId;
     @Value("#{${maps}}")
     private Map<String, String> defaultSearchKey;
+    @Autowired
+    private UserService userService;
 
     /**
      * 使用post方法获取开放平台的结果，body类型限定为x-www-form-urlencoded
@@ -269,7 +276,8 @@ public class OpenPlatformAPI {
      * url: localhost:8080/API/infoByInstanceName
      * </pre>
      * @param name 要获取详情的实体名称
-     * @param course 所属的学科，非必需，但经过测试对结果影响很大
+     * @param course 所属的学科
+     * @param token 用户token(非必须）
      * @return JSON<br>
      * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
      * <pre>
@@ -312,7 +320,8 @@ public class OpenPlatformAPI {
      *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()"
      *       },
      *       ...
-     *     ]
+     *     ],
+     *     "isFavorite": true/false
      *   }
      * }
      * </pre>
@@ -321,7 +330,8 @@ public class OpenPlatformAPI {
     @RequestMapping(value="/API/infoByInstanceName", method=RequestMethod.GET)
     public Map<String, Object> infoByInstanceName(
             @RequestParam(value="name") String name,
-            @RequestParam(value="course") String course){
+            @RequestParam(value="course") String course,
+            @RequestParam(value="token", required = false) String token){
         //传入参数并发出get请求
         Map<String, String> param_map = new HashMap<>();
         param_map.put("id", userId);
@@ -364,7 +374,12 @@ public class OpenPlatformAPI {
             element.remove("subject");
             element.put("course", course);
         }
-
+        if(token == null){
+            response_data.put("isFavorite", false);
+        }
+        else{
+            response_data.put("isFavorite", userService.checkFavorites(token, name, course));
+        }
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
@@ -442,4 +457,7 @@ public class OpenPlatformAPI {
         response.put("data", questionList);
         return response;
     }
+
+
+
 }

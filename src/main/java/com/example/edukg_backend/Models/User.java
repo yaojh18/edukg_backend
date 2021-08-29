@@ -1,5 +1,7 @@
 package com.example.edukg_backend.Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.List;
@@ -20,6 +22,7 @@ public class User {
     @Column(name="password")
     private String password;
 
+    @JsonIgnore
     @ManyToMany(targetEntity = CourseInstance.class, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "tab_user_history",
@@ -28,6 +31,7 @@ public class User {
     )
     private Set<CourseInstance> histories = new HashSet<>();
 
+    @JsonIgnore
     @ManyToMany(targetEntity = CourseInstance.class, cascade = CascadeType.MERGE)
     @JoinTable(
             name = "tab_user_favorite",
@@ -82,4 +86,7 @@ public class User {
     }
 
 
+    public void deleteFavorites(CourseInstance courseInstance) {
+        favorites.remove(courseInstance);
+    }
 }

@@ -14,11 +14,11 @@ public class InstanceService {
         CourseInstance result = courseInstanceRepository.findByInstanceNameAndCourse(instanceName, course);
         if(result != null){
             return result;
-
         }
         result = new CourseInstance();
         result.setInstanceName(instanceName);
         result.setCourse(course);
+        courseInstanceRepository.save(result);
         return result;
     }
 }
