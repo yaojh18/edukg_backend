@@ -215,7 +215,7 @@ public class UserController {
      *
      */
     @ResponseBody
-    @RequestMapping(value="user/geHistoriesList", method=RequestMethod.GET)
+    @RequestMapping(value="user/getHistoriesList", method=RequestMethod.GET)
     public ResponseEntity<Map<String, Object>> getHistoriesList(
             @RequestParam(value="token") String token
     ){
