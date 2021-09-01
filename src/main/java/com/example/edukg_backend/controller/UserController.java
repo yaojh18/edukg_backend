@@ -5,14 +5,15 @@ import com.example.edukg_backend.Util.JwtUtil;
 import com.example.edukg_backend.Util.UserInformationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Controller
 public class UserController {
@@ -227,12 +228,80 @@ public class UserController {
         return userService.getHistoriesList(token);
     }
 
-    /*
+    /**
+     *
+     * <pre>
+     * 获取推荐试题
+     * method: GET
+     * url: localhost:8080/user/recommendQuestion
+     * </pre>
+     * @param token 登录时返回的token
+     * @return JSON<br>
+     * <pre>
+     * status code:200操作成功, 401token相关原因的失败（原因见msg）， 400请求参数有误，500后端出错<br>
+     *{
+     *     "code": 200,
+     *     "data": [
+     *         {
+     *             "qAnswer": "C",
+     *             "qBody": "岳飞是著名的抗金英雄,却被奸臣秦桧等诬告而惨遭杀害。小明深有感触地说:岳飞比窦娥还冤!窦娥这一角色出自()",
+     *             "A": "唐诗",
+     *             "B": "宋词",
+     *             "C": "元曲",
+     *             "D": "明清小说"
+     *         },
+     *         ...
+     *     ]
+     * }
+     * </pre>
+     *
+     */
     @ResponseBody
     @RequestMapping(value = "user/recommendQuestion", method=RequestMethod.GET)
     public ResponseEntity<Map<String, Object>> recommendQuestion(
             @RequestParam(value="token") String token
     ){
+        Map<String, Object> recommend_entity = userService.recommendEntity(token);
+        if(recommend_entity.get("code").equals(400)){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(recommend_entity);
+        }
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userInformationUtil.getUserId());
+        Random rand = new Random();
+        Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
+        List<Map<String, Object>> recommend_entity_list = (List<Map<String, Object>>)recommend_entity.get("data");
+        List<Map<String, Object>> recommend_question_list = new ArrayList<>();
+        for(Map<String, Object> element: recommend_entity_list){
+            if(recommend_question_list.size() >= 10)
+                break;
+            param_map.put("name", (String)element.get("name"));
+            RestTemplate restTemplate = new RestTemplate();
+            Map<String, Object>questionResult = restTemplate.getForObject(
+                    "http://open.edukg.cn/opedukg/api/typeOpen/open" + "/questionListByUriName?id={id}&uriName={name}",
+                    Map.class,
+                    param_map);
+            List<Map<String, Object>> questionList = (List<Map<String, Object>>) questionResult.get("data");
+            if(questionList.isEmpty())
+                continue;
+            Map<String, Object> question = questionList.get(rand.nextInt(questionList.size()));
+            String questionBody = (String)question.get("qBody");
+            Matcher m = p.matcher(questionBody);
+            System.out.println(questionBody);
+            if(m.find()) {
+                question.put("qBody", m.group(1));
+                question.put("A", m.group(2));
+                question.put("B", m.group(3));
+                question.put("C", m.group(4));
+                question.put("D", m.group(5));
+                question.remove("id");
+                recommend_question_list.add(question);
+            }
+        }
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", 200);
+        response.put("data", recommend_question_list);
 
-    }*/
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
 }

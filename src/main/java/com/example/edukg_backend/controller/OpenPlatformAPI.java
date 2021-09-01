@@ -401,7 +401,7 @@ public class OpenPlatformAPI {
 
     /**
      * <pre>
-     * 实体详情页接口
+     * 试题接口
      * method: Get
      * url: localhost:8080/API/questionList
      * </pre>
@@ -442,7 +442,7 @@ public class OpenPlatformAPI {
                 Map.class,
                 param_map);
         List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
-        Pattern p = Pattern.compile("(.*)A\\.(.*)B\\.(.*)C\\.(.*)D\\.(.*)");
+        Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
 
         Iterator<Map<String, Object>> question_iterator = questionList.iterator();
         while(question_iterator.hasNext()){
