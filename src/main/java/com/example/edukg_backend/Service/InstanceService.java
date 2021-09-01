@@ -21,4 +21,17 @@ public class InstanceService {
         courseInstanceRepository.save(result);
         return result;
     }
+    public void addAccessCount(String instanceName, String course){
+        CourseInstance courseInstance = findOrAddInstance(instanceName, course);
+        courseInstance.setAccessCount(courseInstance.getAccessCount()+1);
+        courseInstanceRepository.save(courseInstance);
+    }
+
+    public void setInstanceCategory(String instanceName, String course, String category){
+        CourseInstance courseInstance = findOrAddInstance(instanceName, course);
+        if(courseInstance.getCategory()==null) {
+            courseInstance.setCategory(category);
+            courseInstanceRepository.save(courseInstance);
+        }
+    }
 }
