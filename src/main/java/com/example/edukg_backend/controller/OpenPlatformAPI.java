@@ -505,7 +505,54 @@ public class OpenPlatformAPI {
                 param_map);
 
         List<Map<String, Object>> result_data = (List<Map<String, Object>>)result.get("data");
-        response_data.put("main_instances", result_data);
+        List<Map<String, Object>> response_main_list = new ArrayList<>();
+        Map<String, Integer> temp_set = new HashMap<>();
+        for(Map<String, Object> element: result_data){
+            String label = (String)element.get("label");
+            if(temp_set.containsKey(label)) {
+                Map<String, Object> temp = response_main_list.get(temp_set.get(label));
+                temp.put("category", (String)temp.get("category") + " " + (String)element.get("category"));
+            }
+            else{
+                element.remove("uri");
+                Set<String> seclist = new HashSet<>();
+
+
+                param_map.put("name", label);
+                Map<String, Object>second_level_instance = restTemplate.getForObject(
+                        siteUrl + "/infoByInstanceName?id={id}&name={name}&course={course}",
+                        Map.class,
+                        param_map);
+                List<Map<String, Object>> second_level_instance_list = new ArrayList<>();
+                try {
+                    second_level_instance_list = (List<Map<String, Object>>) (((Map<String, Object>) second_level_instance.get("data")).get("content"));
+                }
+                catch(Exception e){
+                    System.out.println(second_level_instance);
+
+                }
+
+                // List<Map<String, Object>> relationship = (List<Map<String, Object>>) (Map<String, Object>)second_level_instance.get("data")result_data.get("content");
+                for(Map<String, Object> e: second_level_instance_list){
+                    e.remove("predicate");
+                    e.remove("object");
+                    e.remove("subject");
+                    // element.put("course", course);
+                    if(e.containsKey("object_label")){
+                        seclist.add((String) e.get("object_label"));
+                    }
+                    else if(e.containsKey("subject_label")){
+                        seclist.add((String) e.get("subject_label"));
+                    }
+
+                }
+                element.put("relationship_list", seclist);
+                response_main_list.add(element);
+                temp_set.put(label, response_main_list.size() - 1);
+            }
+        }
+        response_data.put("list", response_main_list);
+        response_data.put("result_size", response_main_list.size());
         response.put("data", response_data);
         response.put("code", 200);
 
