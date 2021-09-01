@@ -536,8 +536,8 @@ public class OpenPlatformAPI {
 
 
                 param_map.put("name", label);
-                Map<String, Object>second_level_instance = restTemplate.getForObject(
-                        siteUrl + "/infoByInstanceName?id={id}&name={name}&course={course}",
+               Map<String, Object>second_level_instance = restTemplate.getForObject(
+                       siteUrl + "/infoByInstanceName?id={id}&name={name}&course={course}",
                         Map.class,
                         param_map);
                 List<Map<String, Object>> second_level_instance_list = new ArrayList<>();

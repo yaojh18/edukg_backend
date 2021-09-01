@@ -17,18 +17,18 @@ public class DefaultEntityConfig {
      * data.person.name
      * 这里map名需要和application.properties中的参数一致
      */
-    private List<Map<String, String>> defaultEntity = new ArrayList<>();
+    private List<Map<String, Object>> defaultEntity = new ArrayList<>();
 
 
 
     /**
      * 编写get，set方法方便使用
      */
-    public List<Map<String, String>> getDefaultEntity() {
+    public List<Map<String, Object>> getDefaultEntity() {
         return defaultEntity;
     }
 
-    public void setDefaultEntity(List<Map<String, String>> d) {
+    public void setDefaultEntity(List<Map<String, Object>> d) {
         this.defaultEntity = d;
     }
 }

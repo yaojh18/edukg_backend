@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestOperations;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -232,6 +233,7 @@ public class UserController {
      *
      * <pre>
      * 获取推荐试题
+     * 该接口的机制如下：当用户未访问或收藏过任何实体时，返回默认推荐结果；访问和收藏实体总数小于5个时，返回用户个性推荐和默认推荐的结合；访问和收藏总数超过5个时，返回的试题全部为个性推荐
      * method: GET
      * url: localhost:8080/user/recommendQuestion
      * </pre>
@@ -265,37 +267,20 @@ public class UserController {
         if(recommend_entity.get("code").equals(400)){
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(recommend_entity);
         }
-        Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userInformationUtil.getUserId());
         Random rand = new Random();
-        Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
         List<Map<String, Object>> recommend_entity_list = (List<Map<String, Object>>)recommend_entity.get("data");
         List<Map<String, Object>> recommend_question_list = new ArrayList<>();
         for(Map<String, Object> element: recommend_entity_list){
             if(recommend_question_list.size() >= 10)
                 break;
-            param_map.put("name", (String)element.get("name"));
-            RestTemplate restTemplate = new RestTemplate();
-            Map<String, Object>questionResult = restTemplate.getForObject(
-                    "http://open.edukg.cn/opedukg/api/typeOpen/open" + "/questionListByUriName?id={id}&uriName={name}",
-                    Map.class,
-                    param_map);
-            List<Map<String, Object>> questionList = (List<Map<String, Object>>) questionResult.get("data");
-            if(questionList.isEmpty())
-                continue;
-            Map<String, Object> question = questionList.get(rand.nextInt(questionList.size()));
-            String questionBody = (String)question.get("qBody");
-            Matcher m = p.matcher(questionBody);
-            System.out.println(questionBody);
-            if(m.find()) {
-                question.put("qBody", m.group(1));
-                question.put("A", m.group(2));
-                question.put("B", m.group(3));
-                question.put("C", m.group(4));
-                question.put("D", m.group(5));
-                question.remove("id");
-                recommend_question_list.add(question);
+            getRandomQuestionByEntity(element, rand, recommend_question_list);
+            if(element.get("needMore").equals("true")){
+                Map<String, Object> new_element = getRelatedInstance(element, rand);
+                if((boolean) new_element.get("success")){
+                    getRandomQuestionByEntity(new_element, rand, recommend_question_list);
+                }
             }
+
         }
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
@@ -303,5 +288,78 @@ public class UserController {
 
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    private void getRandomQuestionByEntity(Map<String, Object> element,
+                                           Random rand,
+                                           List<Map<String, Object>> recommend_question_list){
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userInformationUtil.getUserId());
+        Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
+        param_map.put("name", (String)element.get("name"));
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object>questionResult = restTemplate.getForObject(
+                "http://open.edukg.cn/opedukg/api/typeOpen/open" + "/questionListByUriName?id={id}&uriName={name}",
+                Map.class,
+                param_map);
+        List<Map<String, Object>> questionList = (List<Map<String, Object>>) questionResult.get("data");
+        if(questionList.isEmpty())
+            return;
+        Map<String, Object> question = questionList.get(rand.nextInt(questionList.size()));
+        String questionBody = (String)question.get("qBody");
+        Matcher m = p.matcher(questionBody);
+
+        if(m.find()) {
+            question.put("qBody", m.group(1));
+            question.put("A", m.group(2));
+            question.put("B", m.group(3));
+            question.put("C", m.group(4));
+            question.put("D", m.group(5));
+            question.remove("id");
+            recommend_question_list.add(question);
+        }
+
+    }
+
+    private Map<String, Object>getRelatedInstance(Map<String, Object> element, Random rand){
+        Map<String, Object> result = new HashMap<>();
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userInformationUtil.getUserId());
+        param_map.put("name", (String)element.get("name"));
+        param_map.put("course", (String)element.get("course"));
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object>second_level_instance = restTemplate.getForObject(
+                "http://open.edukg.cn/opedukg/api/typeOpen/open" + "/infoByInstanceName?id={id}&name={name}&course={course}",
+                Map.class,
+                param_map);
+        List<Map<String, Object>> second_level_instance_list = new ArrayList<>();
+        try {
+            second_level_instance_list = (List<Map<String, Object>>) (((Map<String, Object>) second_level_instance.get("data")).get("content"));
+        }
+        catch(Exception e){
+            System.out.println(second_level_instance);
+        }
+        if(second_level_instance_list.isEmpty()){
+            result.put("success", false);
+            return result;
+        }
+
+
+        Map<String, Object> e= second_level_instance_list.get(rand.nextInt(second_level_instance_list.size()));
+
+        if(e.containsKey("object_label")){
+            result.put("name", (String) e.get("object_label"));
+        }
+        else if(e.containsKey("subject_label")){
+            result.put("name", (String) e.get("subject_label"));
+        }
+        else {
+            result.put("success", false);
+            return result;
+        }
+        result.put("course", element.get("course"));
+        result.put("needMore", "false");
+        result.put("success", true);
+        return result;
     }
 }

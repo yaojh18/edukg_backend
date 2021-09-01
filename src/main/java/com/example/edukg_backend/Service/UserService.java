@@ -231,16 +231,36 @@ public class UserService {
         }
         else {
             User user = userOptional.get();
-            List<Map<String, String>> recommendList = new ArrayList<>();
+            List<Map<String, Object>> recommendList = new ArrayList<>();
             Set<CourseInstance> favList = user.getFavorites();
             Set<CourseInstance> hisList = user.getHistories();
             httpStatus = HttpStatus.OK;
-            if(hisList.isEmpty() || true){
+            List<Map<String, Object>> result_data = new ArrayList<>();
+            if(hisList.isEmpty() && favList.isEmpty()){
                 result.put("data", defaultEntityConfig.getDefaultEntity());
+            }
+            else{
+
+                addFavoritesAndHistories2Recommend(favList, result_data);
+                addFavoritesAndHistories2Recommend(hisList, result_data);
+                if(result_data.size() < 5){
+                    result_data.addAll(defaultEntityConfig.getDefaultEntity());
+                }
+                result.put("data", result_data);
             }
         }
 
         result.put("code", httpStatus.value());
         return  result;
+    }
+
+    private void addFavoritesAndHistories2Recommend(Set<CourseInstance> userList, List<Map<String, Object>> result_data_list) {
+        for(CourseInstance element: userList){
+            Map<String, Object> temp = new HashMap<>();
+            temp.put("name", element.getInstanceName());
+            temp.put("course", element.getCourse());
+            temp.put("needMore", "true");
+            result_data_list.add(temp);
+        }
     }
 }
