@@ -486,6 +486,45 @@ public class OpenPlatformAPI {
         return response;
     }
 
+
+    /**
+     * <pre>
+     * 提纲接口
+     * method: Get
+     * url: localhost:8080/API/getOutline
+     * </pre>
+     * @param searchKey 要获取提纲的知识
+     * @param course 所属的学科
+     * @return JSON<br>
+     * status code:200成功, 401失败， 400请求参数有误，500后端出错<br>
+     * <pre>
+     *     {
+     *     "code": 200,
+     *     "data": {
+     *         "list": [
+     *             {
+     *                 "label": "印度的种姓制度",
+     *                 "category": "政治文明历程",
+     *                 "relationship_list": []
+     *             },
+     *             {
+     *                 "label": "监察制度",
+     *                 "category": "谏议制度的演变",
+     *                 "relationship_list": [
+     *                     "刺史",
+     *                     "提点刑狱司",
+     *                     "监察御史",
+     *                     "御史大夫",
+     *                     "御史台"
+     *                 ]
+     *             },
+     *             ...
+     *         ],
+     *         "result_size": 64 // list.size()，即一级实体的数量
+     *     }
+     * }
+     * </pre>
+     */
     @ResponseBody
     @RequestMapping(value = "/API/getOutline", method = RequestMethod.GET)
     public Map<String, Object> getOutline(
