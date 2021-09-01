@@ -462,6 +462,33 @@ public class OpenPlatformAPI {
         return response;
     }
 
+    @ResponseBody
+    @RequestMapping(value = "/API/getOutline", method = RequestMethod.GET)
+    public Map<String, Object> getOutline(
+            @RequestParam(value="searchKey") String searchKey,
+            @RequestParam(value="course") String course
+    ){
+        Map<String, String> param_map = new HashMap<>();
+        Map<String, Object> response = new HashMap<>();
+        Map<String, Object> response_data = new HashMap<>();
+        param_map.put("id", userId);
+        param_map.put("searchKey", searchKey);
+        param_map.put("course", course);
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object>result = restTemplate.getForObject(
+                siteUrl + "/instanceList?id={id}&searchKey={searchKey}&course={course}",
+                Map.class,
+                param_map);
+
+        List<Map<String, Object>> result_data = (List<Map<String, Object>>)result.get("data");
+        response_data.put("main_instances", result_data);
+        response.put("data", response_data);
+        response.put("code", 200);
+
+        return response;
+
+    }
+
 
 
 }
