@@ -18,6 +18,7 @@ public class CourseInstance {
     private Long id;
     private String instanceName;
     private String course;
+    private String category;
     private int accessCount;
     @JsonIgnore
     @ManyToMany(mappedBy = "histories")

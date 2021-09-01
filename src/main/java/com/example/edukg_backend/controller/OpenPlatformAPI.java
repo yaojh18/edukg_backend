@@ -3,6 +3,7 @@ package com.example.edukg_backend.controller;
 
 import com.alibaba.fastjson.JSON;
 import com.example.edukg_backend.Models.User;
+import com.example.edukg_backend.Service.InstanceService;
 import com.example.edukg_backend.Service.UserService;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,8 @@ public class OpenPlatformAPI {
     private Map<String, String> defaultSearchKey;
     @Autowired
     private UserService userService;
+    @Autowired
+    private InstanceService instanceService;
 
     /**
      * 使用post方法获取开放平台的结果，body类型限定为x-www-form-urlencoded
@@ -54,6 +57,21 @@ public class OpenPlatformAPI {
         RestTemplate restTemplate = new RestTemplate();
         Map<String, Object> result = restTemplate.postForObject(url, httpEntity, Map.class);
         return result;
+    }
+
+    private String getInstanceCategory(String name, String course){
+        Map<String, String> param_map = new HashMap<>();
+        param_map.put("id", userId);
+        param_map.put("searchKey", name);
+        param_map.put("course", course);
+        RestTemplate restTemplate = new RestTemplate();
+        Map<String, Object> result = restTemplate.getForObject(
+                siteUrl + "/instanceList?id={id}&searchKey={searchKey}&course={course}",
+                Map.class,
+                param_map);
+        //清除结果中的uri
+        List<Map<String, String>> result_data = (List<Map<String, String>>) result.get("data");
+        return result_data.get(0).get("category");
     }
 
     public void setUserId(String userId){
@@ -377,6 +395,12 @@ public class OpenPlatformAPI {
             element.remove("subject");
             element.put("course", course);
         }
+
+        //添加历史和访问次数
+        String category = this.getInstanceCategory(name, course);
+        instanceService.setInstanceCategory(name, course, category);
+        instanceService.addAccessCount(name,course);
+
         if(token == null){
             response_data.put("isFavorite", false);
         }

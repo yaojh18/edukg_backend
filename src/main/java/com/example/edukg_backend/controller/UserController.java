@@ -174,6 +174,7 @@ public class UserController {
      *             "id": 1, //本地数据库内的实体id，可能没用，不需要的话就不用管
      *             "instanceName": "李白",
      *             "course": "chinese",
+     *             "category": "人物",
      *             "accessCount": 0 //该实体被访问的次数，不需要的话就不用管
      *         }
      *     ]
@@ -207,6 +208,7 @@ public class UserController {
      *             "id": 1, //本地数据库内的实体id，可能没用，不需要的话就不用管
      *             "instanceName": "李白",
      *             "course": "chinese",
+     *             "category": "人物",
      *             "accessCount": 0 //该实体被访问的次数，不需要的话就不用管
      *         }
      *     ]
