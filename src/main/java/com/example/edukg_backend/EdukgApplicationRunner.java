@@ -1,5 +1,6 @@
 package com.example.edukg_backend;
 
+import com.example.edukg_backend.Util.UserInformationUtil;
 import com.example.edukg_backend.controller.OpenPlatformAPI;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,7 @@ import java.util.Map;
 @PropertySource(value="classpath:config/EdukgApplicationRunner.properties")
 public class EdukgApplicationRunner implements ApplicationRunner {
     @Autowired
-    OpenPlatformAPI openPlatformAPI;
+    UserInformationUtil userInformationUtil;
     @Value("${phone}")
     private String phone;
     @Value("${password}")
@@ -36,6 +37,6 @@ public class EdukgApplicationRunner implements ApplicationRunner {
         headers.add("Content-Type", "application/x-www-form-urlencoded");
         HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(param_map, headers);
         Map<String, String> result = new RestTemplate().postForObject(url, httpEntity, Map.class);
-        openPlatformAPI.setUserId(result.get("id"));
+        userInformationUtil.setUserId(result.get("id"));
     }
 }

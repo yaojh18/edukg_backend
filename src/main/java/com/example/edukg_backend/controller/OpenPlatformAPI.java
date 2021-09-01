@@ -1,21 +1,16 @@
 package com.example.edukg_backend.controller;
 
 
-import com.alibaba.fastjson.JSON;
-import com.example.edukg_backend.Models.User;
 import com.example.edukg_backend.Service.InstanceService;
 import com.example.edukg_backend.Service.UserService;
-import io.jsonwebtoken.Claims;
+import com.example.edukg_backend.Util.UserInformationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -35,13 +30,14 @@ public class OpenPlatformAPI {
     @Value("${site.url}")
     private String siteUrl;
     // @Value("${site.userid}")
-    private String userId;
     @Value("#{${maps}}")
     private Map<String, String> defaultSearchKey;
     @Autowired
     private UserService userService;
     @Autowired
     private InstanceService instanceService;
+    @Autowired
+    private UserInformationUtil userInformationUtil;
 
     /**
      * 使用post方法获取开放平台的结果，body类型限定为x-www-form-urlencoded
@@ -55,13 +51,12 @@ public class OpenPlatformAPI {
         headers.add("Content-Type", "application/x-www-form-urlencoded");
         HttpEntity<MultiValueMap<String, Object>> httpEntity = new HttpEntity<>(param_map, headers);
         RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object> result = restTemplate.postForObject(url, httpEntity, Map.class);
-        return result;
+        return restTemplate.postForObject(url, httpEntity, Map.class);
     }
 
     private String getInstanceCategory(String name, String course){
         Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userId);
+        param_map.put("id", userInformationUtil.getUserId());
         param_map.put("searchKey", name);
         param_map.put("course", course);
         RestTemplate restTemplate = new RestTemplate();
@@ -74,9 +69,6 @@ public class OpenPlatformAPI {
         return result_data.get(0).get("category");
     }
 
-    public void setUserId(String userId){
-        this.userId = userId;
-    }
     /**
      * <pre>
      * 获取首页实体列表
@@ -155,7 +147,7 @@ public class OpenPlatformAPI {
             @RequestParam(value="course", defaultValue = "chinese")String course){
         //传入参数并发出get请求
             Map<String, String> param_map = new HashMap<>();
-            param_map.put("id", userId);
+            param_map.put("id", userInformationUtil.getUserId());
             param_map.put("searchKey", searchKey);
             param_map.put("course", course);
             RestTemplate restTemplate = new RestTemplate();
@@ -216,7 +208,7 @@ public class OpenPlatformAPI {
             @RequestParam(value="course", required = false)String course){
         //try {
             MultiValueMap<String, Object> param_map = new LinkedMultiValueMap<>();
-            param_map.add("id", userId);
+            param_map.add("id", userInformationUtil.getUserId());
             param_map.add("context", context);
             String url = siteUrl + "/linkInstance";
             if (course != null) {
@@ -267,7 +259,7 @@ public class OpenPlatformAPI {
             @RequestParam(value="inputQuestion") String inputQuestion,
             @RequestParam(value="course", required = false) String course){
         MultiValueMap<String, Object> param_map = new LinkedMultiValueMap<>();
-        param_map.add("id", userId);
+        param_map.add("id", userInformationUtil.getUserId());
         param_map.add("inputQuestion", inputQuestion);
         if(course != null){
             param_map.add("course", course);
@@ -331,17 +323,6 @@ public class OpenPlatformAPI {
      *       },
      *       ...
      *     ],
-     *     "questionList": [
-     *       {
-     *         "qAnswer": "B",
-     *         "A": "李白",
-     *         "B": "杜甫",
-     *         "C": "白居易“，
-     *         "D": "李商隐",
-     *         "qBody": "郭沫若赞誉一位唐代诗人:世上疮痍,诗中圣哲;民间疾苦,笔底波澜。这位被称为圣哲的诗人是()"
-     *       },
-     *       ...
-     *     ],
      *     "isFavorite": true/false
      *   }
      * }
@@ -355,7 +336,7 @@ public class OpenPlatformAPI {
             @RequestParam(value="token", required = false) String token){
         //传入参数并发出get请求
         Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userId);
+        param_map.put("id", userInformationUtil.getUserId());
         param_map.put("name", name);
         param_map.put("course", course);
         RestTemplate restTemplate = new RestTemplate();
@@ -411,7 +392,7 @@ public class OpenPlatformAPI {
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
-        response_data.put("questionList", questionList(name, course).get("data"));
+        //response_data.put("questionList", questionList(name, course).get("data"));
         response.put("code", 200);
         response.put("data", response_data);
         return response;
@@ -452,7 +433,7 @@ public class OpenPlatformAPI {
             @RequestParam(value="course") String course){
         //传入参数并发出get请求
         Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userId);
+        param_map.put("id", userInformationUtil.getUserId());
         param_map.put("name", name);
         param_map.put("course", course);
         RestTemplate restTemplate = new RestTemplate();
@@ -503,11 +484,6 @@ public class OpenPlatformAPI {
      *     "data": {
      *         "list": [
      *             {
-     *                 "label": "印度的种姓制度",
-     *                 "category": "政治文明历程",
-     *                 "relationship_list": []
-     *             },
-     *             {
      *                 "label": "监察制度",
      *                 "category": "谏议制度的演变",
      *                 "relationship_list": [
@@ -534,7 +510,7 @@ public class OpenPlatformAPI {
         Map<String, String> param_map = new HashMap<>();
         Map<String, Object> response = new HashMap<>();
         Map<String, Object> response_data = new HashMap<>();
-        param_map.put("id", userId);
+        param_map.put("id", userInformationUtil.getUserId());
         param_map.put("searchKey", searchKey);
         param_map.put("course", course);
         RestTemplate restTemplate = new RestTemplate();
@@ -547,6 +523,8 @@ public class OpenPlatformAPI {
         List<Map<String, Object>> response_main_list = new ArrayList<>();
         Map<String, Integer> temp_set = new HashMap<>();
         for(Map<String, Object> element: result_data){
+            if(response_main_list.size() >= 10)
+                break;
             String label = (String)element.get("label");
             if(temp_set.containsKey(label)) {
                 Map<String, Object> temp = response_main_list.get(temp_set.get(label));
@@ -570,6 +548,8 @@ public class OpenPlatformAPI {
                     System.out.println(second_level_instance);
 
                 }
+                if(second_level_instance_list.isEmpty())
+                    continue;
 
                 // List<Map<String, Object>> relationship = (List<Map<String, Object>>) (Map<String, Object>)second_level_instance.get("data")result_data.get("content");
                 for(Map<String, Object> e: second_level_instance_list){

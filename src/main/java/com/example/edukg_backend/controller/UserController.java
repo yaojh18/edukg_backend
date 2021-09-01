@@ -2,6 +2,7 @@ package com.example.edukg_backend.controller;
 
 import com.example.edukg_backend.Service.UserService;
 import com.example.edukg_backend.Util.JwtUtil;
+import com.example.edukg_backend.Util.UserInformationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +18,8 @@ import java.util.Map;
 public class UserController {
     @Autowired
     UserService userService;
+    @Autowired
+    UserInformationUtil userInformationUtil;
 
     /**
      * <pre>
@@ -223,4 +226,13 @@ public class UserController {
     ){
         return userService.getHistoriesList(token);
     }
+
+    /*
+    @ResponseBody
+    @RequestMapping(value = "user/recommendQuestion", method=RequestMethod.GET)
+    public ResponseEntity<Map<String, Object>> recommendQuestion(
+            @RequestParam(value="token") String token
+    ){
+
+    }*/
 }
