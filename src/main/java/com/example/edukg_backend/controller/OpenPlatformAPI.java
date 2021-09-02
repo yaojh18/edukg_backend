@@ -66,8 +66,13 @@ public class OpenPlatformAPI {
                 Map.class,
                 param_map);
         //清除结果中的uri
-        List<Map<String, String>> result_data = (List<Map<String, String>>) result.get("data");
-        return result_data.get(0).get("category");
+        try {
+            List<Map<String, String>> result_data = (List<Map<String, String>>) result.get("data");
+            return result_data.get(0).get("category");
+        }
+        catch(Exception e){
+            return "";
+        }
     }
 
     /**
@@ -190,7 +195,9 @@ public class OpenPlatformAPI {
                 Collections.sort(response_data, new Comparator<Map<String, Object>>() {
                     @Override
                     public int compare(Map<String, Object> o1, Map<String, Object> o2) {
-                        return 0;
+                        Integer count1 = instanceService.findOrAddInstance((String)o1.get("label"), course).getAccessCount();
+                        Integer count2 = instanceService.findOrAddInstance((String)o2.get("label"), course).getAccessCount();
+                        return count2.compareTo(count1);
                     }
                 });
             }
