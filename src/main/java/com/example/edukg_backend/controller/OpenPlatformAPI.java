@@ -156,16 +156,20 @@ public class OpenPlatformAPI {
     ){
         //传入参数并发出get请求
             Map<String, String> param_map = new HashMap<>();
+
             param_map.put("id", userInformationUtil.getUserId());
             param_map.put("searchKey", searchKey);
             param_map.put("course", course);
+            //System.out.println(param_map);
             RestTemplate restTemplate = new RestTemplate();
             Map<String, Object> result = restTemplate.getForObject(
                     siteUrl + "/instanceList?id={id}&searchKey={searchKey}&course={course}",
                     Map.class,
                     param_map);
+            //System.out.println(result);
             //清除结果中的uri
             List<Map<String, Object>> result_data = (List<Map<String, Object>>) result.get("data");
+
             Map<String, Integer> temp_set = new HashMap<>();
             List<Map<String, Object>> response_data = new ArrayList<>();
             for (Map<String, Object> element : result_data) {
@@ -363,7 +367,8 @@ public class OpenPlatformAPI {
      *       },
      *       ...
      *     ],
-     *     "isFavorite": true/false
+     *     "isFavorite": true/false,
+     *     "hasQuestion": true/false
      *   }
      * }
      * </pre>
@@ -432,7 +437,7 @@ public class OpenPlatformAPI {
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
-        //response_data.put("questionList", questionList(name, course).get("data"));
+        response_data.put("hasQuestion", ((List)questionList(name, course).get("data")).size() > 0);
         response.put("code", 200);
         response.put("data", response_data);
         return response;

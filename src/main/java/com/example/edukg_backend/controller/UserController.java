@@ -272,7 +272,7 @@ public class UserController {
         List<Map<String, Object>> recommend_question_list = new ArrayList<>();
         Set<String> questionBodySet = new HashSet<>();
         for(Map<String, Object> element: recommend_entity_list){
-            if(recommend_question_list.size() >= 10)
+            if(recommend_question_list.size() >= 3)
                 break;
             getRandomQuestionByEntity(element, rand, recommend_question_list, questionBodySet);
             if(element.get("needMore").equals("true")){
