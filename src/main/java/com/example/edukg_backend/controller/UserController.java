@@ -270,14 +270,15 @@ public class UserController {
         Random rand = new Random();
         List<Map<String, Object>> recommend_entity_list = (List<Map<String, Object>>)recommend_entity.get("data");
         List<Map<String, Object>> recommend_question_list = new ArrayList<>();
+        Set<String> questionBodySet = new HashSet<>();
         for(Map<String, Object> element: recommend_entity_list){
             if(recommend_question_list.size() >= 10)
                 break;
-            getRandomQuestionByEntity(element, rand, recommend_question_list);
+            getRandomQuestionByEntity(element, rand, recommend_question_list, questionBodySet);
             if(element.get("needMore").equals("true")){
                 Map<String, Object> new_element = getRelatedInstance(element, rand);
                 if((boolean) new_element.get("success")){
-                    getRandomQuestionByEntity(new_element, rand, recommend_question_list);
+                    getRandomQuestionByEntity(new_element, rand, recommend_question_list, questionBodySet);
                 }
             }
 
@@ -292,7 +293,8 @@ public class UserController {
 
     private void getRandomQuestionByEntity(Map<String, Object> element,
                                            Random rand,
-                                           List<Map<String, Object>> recommend_question_list){
+                                           List<Map<String, Object>> recommend_question_list,
+                                           Set<String> questionBodySet){
         Map<String, String> param_map = new HashMap<>();
         param_map.put("id", userInformationUtil.getUserId());
         Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
@@ -303,13 +305,18 @@ public class UserController {
                 Map.class,
                 param_map);
         List<Map<String, Object>> questionList = (List<Map<String, Object>>) questionResult.get("data");
-        if(questionList.isEmpty())
+        if(questionList == null || questionList.isEmpty())
             return;
+
         Map<String, Object> question = questionList.get(rand.nextInt(questionList.size()));
         String questionBody = (String)question.get("qBody");
         Matcher m = p.matcher(questionBody);
+        //重复问题
+        if(questionBodySet.contains(questionBody))
+            return;
 
         if(m.find()) {
+            questionBodySet.add(questionBody);
             question.put("qBody", m.group(1));
             question.put("A", m.group(2));
             question.put("B", m.group(3));
