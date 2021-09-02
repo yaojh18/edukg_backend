@@ -3,6 +3,7 @@ package com.example.edukg_backend.controller;
 
 import com.example.edukg_backend.Service.InstanceService;
 import com.example.edukg_backend.Service.UserService;
+import com.example.edukg_backend.Util.PinyinUtil;
 import com.example.edukg_backend.Util.UserInformationUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -104,7 +105,7 @@ public class OpenPlatformAPI {
     @RequestMapping(value="API/homeList")
     public Map<String, Object> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
         String searchKey = defaultSearchKey.get(course);
-        return this.instanceList(searchKey, course);
+        return this.instanceList(searchKey, course, "default");
     }
 
     /**
@@ -116,6 +117,7 @@ public class OpenPlatformAPI {
      * @param searchKey 需要搜索的关键词
      * @param course 搜索的学科，chinese/english/math/physics/chemistry/biology/history/geo/politics,
      *               default为chinese(之后可能加入all）
+     * @param sortMethod 排序方式：default/pinyin/accessCount 分别对应默认/拼音/访问次数
      * @return JSON<br>
      * status code:200成功, 400请求参数有误，500后端出错<br>
      * <pre>
@@ -144,7 +146,9 @@ public class OpenPlatformAPI {
     @RequestMapping(value="/API/instanceList", method = RequestMethod.GET)
     public Map<String, Object> instanceList(
             @RequestParam(value="searchKey")String searchKey,
-            @RequestParam(value="course", defaultValue = "chinese")String course){
+            @RequestParam(value="course", defaultValue = "chinese")String course,
+            @RequestParam(value="sortMethod", defaultValue = "default")String sortMethod
+    ){
         //传入参数并发出get请求
             Map<String, String> param_map = new HashMap<>();
             param_map.put("id", userInformationUtil.getUserId());
@@ -157,17 +161,46 @@ public class OpenPlatformAPI {
                     param_map);
             //清除结果中的uri
             List<Map<String, Object>> result_data = (List<Map<String, Object>>) result.get("data");
+            Map<String, Integer> temp_set = new HashMap<>();
+            List<Map<String, Object>> response_data = new ArrayList<>();
             for (Map<String, Object> element : result_data) {
                 element.remove("uri");
                 element.put("course", course);
+                String label = (String)element.get("label");
+                if(temp_set.containsKey(label)) {
+                    Map<String, Object> temp = response_data.get(temp_set.get(label));
+                    temp.put("category", (String)temp.get("category") + " " + (String)element.get("category"));
+                }
+                else{
+                    response_data.add(element);
+                    temp_set.put(label, response_data.size() - 1);
+                }
+            }
+            if(sortMethod.equals("pinyin")){
+                Collections.sort(response_data, new Comparator<Map<String, Object>>() {
+                    @Override
+                    public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                        String pinyin1 = PinyinUtil.getFullSpell((String) o1.get("label"));
+                        String pinyin2 = PinyinUtil.getFullSpell((String) o2.get("label"));
+                        return pinyin1.compareTo(pinyin2);
+                    }
+                });
+            }
+            else if(sortMethod.equals("accessCount")){
+                Collections.sort(response_data, new Comparator<Map<String, Object>>() {
+                    @Override
+                    public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+                        return 0;
+                    }
+                });
             }
 
             Map<String, Object> response = new HashMap<>();
-            Map<String, Object> response_data = new HashMap<>();
-            response_data.put("result", result_data);
-            response_data.put("result_size", result_data.size());
+            Map<String, Object> response_data_and_size = new HashMap<>();
+            response_data_and_size.put("result", response_data);
+            response_data_and_size.put("result_size", result_data.size());
             response.put("code", 200);
-            response.put("data", response_data);
+            response.put("data", response_data_and_size);
             return response;
 
     }
