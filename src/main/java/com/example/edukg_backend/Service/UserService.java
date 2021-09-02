@@ -33,9 +33,14 @@ public class UserService {
         if(token==null){
             return Optional.empty();
         }
-        Claims claims = jwtUtil.getTokenClaim(token);
-        Long id = Long.parseLong(claims.getSubject());
-        return userRepository.findById(id);
+        try {
+            Claims claims = jwtUtil.getTokenClaim(token);
+            Long id = Long.parseLong(claims.getSubject());
+            return userRepository.findById(id);
+        }
+        catch (Exception e){
+            return Optional.empty();
+        }
     }
 
     public ResponseEntity<Map<String, Object>> login(String userName, String password){
