@@ -158,9 +158,7 @@ public class UserService {
     }
 
     public boolean checkFavorites(String token, String instanceName, String course){
-        Claims claims = jwtUtil.getTokenClaim(token);
-        Long id = Long.parseLong(claims.getSubject());
-        Optional<User> userOptional = userRepository.findById(id);
+        Optional<User> userOptional = checkToken(token);
         if(userOptional.isPresent()) {
             User user = userOptional.get();
             return user.getFavorites().contains(instanceService.findOrAddInstance(instanceName, course));

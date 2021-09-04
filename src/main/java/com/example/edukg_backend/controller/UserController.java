@@ -268,10 +268,13 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(recommend_entity);
         }
         Random rand = new Random();
+        System.out.println(token);
         List<Map<String, Object>> recommend_entity_list = (List<Map<String, Object>>)recommend_entity.get("data");
         List<Map<String, Object>> recommend_question_list = new ArrayList<>();
         Set<String> questionBodySet = new HashSet<>();
+
         for(Map<String, Object> element: recommend_entity_list){
+            System.out.println(element);
             if(recommend_question_list.size() >= 3)
                 break;
             getRandomQuestionByEntity(element, rand, recommend_question_list, questionBodySet);
@@ -281,7 +284,6 @@ public class UserController {
                     getRandomQuestionByEntity(new_element, rand, recommend_question_list, questionBodySet);
                 }
             }
-
         }
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
@@ -324,6 +326,7 @@ public class UserController {
             question.put("D", m.group(5));
             question.remove("id");
             recommend_question_list.add(question);
+            System.out.println(question);
         }
 
     }

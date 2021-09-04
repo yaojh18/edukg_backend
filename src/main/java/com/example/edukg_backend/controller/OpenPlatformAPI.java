@@ -323,6 +323,7 @@ public class OpenPlatformAPI {
         response_data.put("result", question_answer);
         response.put("code", 200);
         response.put("data", response_data);
+        System.out.println(response);
         return response;
     }
 
