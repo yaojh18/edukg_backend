@@ -381,9 +381,10 @@ public class OpenPlatformAPI {
             @RequestParam(value="course") String course,
             @RequestParam(value="token", required = false) String token){
         //传入参数并发出get请求
+        String name_without_space = name.replace(" ", "");
         Map<String, String> param_map = new HashMap<>();
         param_map.put("id", userInformationUtil.getUserId());
-        param_map.put("name", name);
+        param_map.put("name", name_without_space);
         param_map.put("course", course);
         RestTemplate restTemplate = new RestTemplate();
         Map<String, Object>result = restTemplate.getForObject(
@@ -438,7 +439,7 @@ public class OpenPlatformAPI {
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
-        response_data.put("hasQuestion", ((List)questionList(name, course).get("data")).size() > 0);
+        response_data.put("hasQuestion", ((List)questionList(name_without_space, course).get("data")).size() > 0);
         response.put("code", 200);
         response.put("data", response_data);
         return response;
