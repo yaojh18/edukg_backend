@@ -417,6 +417,8 @@ public class OpenPlatformAPI {
         }
 
         List<Map<String, Object>> relationship = (List<Map<String, Object>>) result_data.get("content");
+        if(relationship.size() > 20)
+            relationship = relationship.subList(0, 20);
         for(Map<String, Object> element: relationship){
             element.remove("predicate");
             element.remove("object");

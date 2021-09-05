@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -27,7 +29,23 @@ public class CourseInstance {
     @ManyToMany(mappedBy = "favorites")
     private  Set<User> lovers = new HashSet<>();
 
+    @JsonIgnore
+    @ManyToMany(targetEntity = CourseInstance.class, cascade = CascadeType.MERGE)
+    @JoinTable(
+            name = "tab_instance_comment",
+            joinColumns = {@JoinColumn(name="instance_id")},
+            inverseJoinColumns = {@JoinColumn(name = "comment_id")}
+    )
+    private List<Comment> commentList = new ArrayList<>();
 
+
+    public void addComment(Comment c){
+        commentList.add(c);
+    }
+
+    public List<Comment> getCommentList(){
+        return commentList;
+    }
 
     @Override
     public String toString(){
