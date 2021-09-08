@@ -29,21 +29,15 @@ public class CourseInstance {
     @ManyToMany(mappedBy = "favorites")
     private  Set<User> lovers = new HashSet<>();
 
-    @JsonIgnore
-    @ManyToMany(targetEntity = CourseInstance.class, cascade = CascadeType.MERGE)
-    @JoinTable(
-            name = "tab_instance_comment",
-            joinColumns = {@JoinColumn(name="instance_id")},
-            inverseJoinColumns = {@JoinColumn(name = "comment_id")}
-    )
-    private List<Comment> commentList = new ArrayList<>();
+    @OneToMany(targetEntity = CourseInstance.class)
+    private List<InstanceComment> commentList = new ArrayList<>();
 
 
-    public void addComment(Comment c){
+    public void addComment(InstanceComment c){
         commentList.add(c);
     }
 
-    public List<Comment> getCommentList(){
+    public List<InstanceComment> getCommentList(){
         return commentList;
     }
 

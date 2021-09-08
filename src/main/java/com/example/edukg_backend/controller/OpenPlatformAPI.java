@@ -355,6 +355,7 @@ public class OpenPlatformAPI {
      *     ],
      *     "description": "（约813—约858）　唐代诗人。字义山，号玉溪生，怀州河内（现河南沁阳）人。其诗揭露和批判当时藩镇割据、宦官擅权和上层
      *     统治集团的腐朽糜烂，《行次西郊作一百韵》《有感二首》《重有感》等皆著名；...。",
+     *     "img": "http://kb.cs.tsinghua.edu.cn/apihtml/getpng/495/CS090002T00620010201",
      *     "relationship": [
      *       {
      *         "predicate_label": "主要作品",
@@ -395,12 +396,17 @@ public class OpenPlatformAPI {
         Map<String, Object> response_data = new HashMap<>();
         Map<String, Object> result_data = (Map<String, Object>) result.get("data");
         response_data.put("description", "");
+        response_data.put("img", "");
         List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
         Iterator<Map<String, Object>> it = property.iterator();
         while(it.hasNext()){
             Map<String, Object> element = it.next();
             if(element.get("predicateLabel").equals("内容")) {
                 response_data.put("description", element.get("object"));
+                it.remove();
+            }
+            else if(element.get("predicate").equals("http://edukg.org/knowledge/0.1/property/common#image")){
+                response_data.put("img", element.get("object"));
                 it.remove();
             }
             else if(element.get("objectLabel") != null){

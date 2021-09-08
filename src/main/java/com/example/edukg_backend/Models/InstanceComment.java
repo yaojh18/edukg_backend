@@ -13,7 +13,7 @@ import java.util.List;
 @Table(name="tab_comment")
 @Getter
 @Setter
-public class Comment {
+public class InstanceComment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
