@@ -1,6 +1,7 @@
 package com.example.edukg_backend.controller;
 
 
+import com.example.edukg_backend.Models.User;
 import com.example.edukg_backend.Service.InstanceService;
 import com.example.edukg_backend.Service.UserService;
 import com.example.edukg_backend.Util.PinyinUtil;
@@ -9,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -23,6 +26,7 @@ import org.springframework.http.HttpHeaders;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 
 @Controller
@@ -108,9 +112,9 @@ public class OpenPlatformAPI {
      */
     @ResponseBody
     @RequestMapping(value="API/homeList")
-    public Map<String, Object> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
+    public ResponseEntity<Map<String, Object>> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
         String searchKey = defaultSearchKey.get(course);
-        return this.instanceList(searchKey, course, "default");
+        return this.instanceList(searchKey, course, "default", "default", null);
     }
 
     /**
@@ -123,6 +127,8 @@ public class OpenPlatformAPI {
      * @param course 搜索的学科，chinese/english/math/physics/chemistry/biology/history/geo/politics,
      *               default为chinese(之后可能加入all）
      * @param sortMethod 排序方式：default/pinyin/accessCount 分别对应默认/拼音/访问次数
+     * @param token 用户token，非必须，只在筛选用户访问过和用户收藏的内容时起效
+     * @param filterMethod 筛选方法：default/popular/history/favorite，分别对应不筛选/被访问次数不少于5/用户访问过的/用户收藏的，使用后两个筛选需要传token
      * @return JSON<br>
      * status code:200成功, 400请求参数有误，500后端出错<br>
      * <pre>
@@ -149,10 +155,12 @@ public class OpenPlatformAPI {
      */
     @ResponseBody
     @RequestMapping(value="/API/instanceList", method = RequestMethod.GET)
-    public Map<String, Object> instanceList(
+    public ResponseEntity<Map<String, Object>> instanceList(
             @RequestParam(value="searchKey")String searchKey,
             @RequestParam(value="course", defaultValue = "chinese")String course,
-            @RequestParam(value="sortMethod", defaultValue = "default")String sortMethod
+            @RequestParam(value="sortMethod", defaultValue = "default")String sortMethod,
+            @RequestParam(value="filterMethod", defaultValue = "default")String filterMethod,
+            @RequestParam(value="token", required = false)String token
     ){
         //传入参数并发出get请求
             Map<String, String> param_map = new HashMap<>();
@@ -185,6 +193,38 @@ public class OpenPlatformAPI {
                     temp_set.put(label, response_data.size() - 1);
                 }
             }
+            if(filterMethod.equals("popular")){
+                response_data = response_data.stream().filter(
+                        (Map<String, Object> e) -> instanceService.findOrAddInstance((String) e.get("label"), course).getAccessCount() >= 5
+
+                ).collect(Collectors.toList());
+            }
+            else if(filterMethod.equals("favorite")){
+                Optional<User> userOptional = userService.checkToken(token);
+                if(userOptional.isEmpty()){
+                    Map<String, Object> err_msg = new HashMap<>();
+                    err_msg.put("msg", "未登录");
+                    err_msg.put("code", 401);
+                    return new ResponseEntity<>(err_msg, HttpStatus.UNAUTHORIZED);
+                }
+                User user = userOptional.get();
+                response_data = response_data.stream().filter(
+                        (Map<String, Object> e) -> user.getFavorites().contains(instanceService.findOrAddInstance((String)e.get("label"), course))
+                ).collect(Collectors.toList());
+            }
+            else if(filterMethod.equals("history")){
+                Optional<User> userOptional = userService.checkToken(token);
+                if(userOptional.isEmpty()){
+                    Map<String, Object> err_msg = new HashMap<>();
+                    err_msg.put("msg", "未登录");
+                    err_msg.put("code", 401);
+                    return new ResponseEntity<>(err_msg, HttpStatus.UNAUTHORIZED);
+                }
+                User user = userOptional.get();
+                response_data = response_data.stream().filter(
+                        (Map<String, Object> e) -> user.getHistories().contains(instanceService.findOrAddInstance((String)e.get("label"), course))
+                ).collect(Collectors.toList());
+            }
             if(sortMethod.equals("pinyin")){
                 Collections.sort(response_data, new Comparator<Map<String, Object>>() {
                     @Override
@@ -209,10 +249,10 @@ public class OpenPlatformAPI {
             Map<String, Object> response = new HashMap<>();
             Map<String, Object> response_data_and_size = new HashMap<>();
             response_data_and_size.put("result", response_data);
-            response_data_and_size.put("result_size", result_data.size());
+            response_data_and_size.put("result_size", response_data.size());
             response.put("code", 200);
             response.put("data", response_data_and_size);
-            return response;
+            return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
 
