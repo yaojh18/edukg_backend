@@ -409,6 +409,9 @@ public class OpenPlatformAPI {
                 response_data.put("img", element.get("object"));
                 it.remove();
             }
+            else if(element.get("predicateLabel").equals("individual_type")) {
+                it.remove();
+            }
             else if(element.get("objectLabel") != null){
                 element.put("object", element.get("objectLabel"));
                 element.remove("objectLabel");
