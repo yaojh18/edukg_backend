@@ -22,7 +22,15 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestTemplate;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -420,21 +428,30 @@ public class OpenPlatformAPI {
     public Map<String, Object> infoByInstanceName(
             @RequestParam(value="name") String name,
             @RequestParam(value="course") String course,
-            @RequestParam(value="token", required = false) String token){
+            @RequestParam(value="token", required = false) String token) throws URISyntaxException, UnsupportedEncodingException {
         //传入参数并发出get请求
-        String name_without_space = name.replace(" ", "");
+
+        /*
         Map<String, String> param_map = new HashMap<>();
         param_map.put("id", userInformationUtil.getUserId());
         param_map.put("name", name_without_space);
         param_map.put("course", course);
+        */
+        String url = siteUrl + "/infoByInstanceName?";
+        String name_without_space = name.replace(" ", "+");
         RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object>result = restTemplate.getForObject(
-                siteUrl + "/infoByInstanceName?id={id}&name={name}&course={course}",
-                Map.class,
-                param_map);
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(url)
+                .queryParam("id", userInformationUtil.getUserId())
+                .queryParam("name", URLEncoder.encode(name_without_space, "UTF-8"))
+                .queryParam("course", course);
+        URI uri = builder.build(true).toUri();
+        System.out.println(uri);
+        Map<String, Object> result = restTemplate.getForObject(uri, Map.class);
 
         Map<String, Object> response_data = new HashMap<>();
         Map<String, Object> result_data = (Map<String, Object>) result.get("data");
+        System.out.println("result is" + result);
         response_data.put("description", "");
         response_data.put("img", "");
         List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
@@ -490,7 +507,7 @@ public class OpenPlatformAPI {
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
-        response_data.put("hasQuestion", ((List)questionList(name_without_space, course).get("data")).size() > 0);
+        response_data.put("hasQuestion", ((List)questionList(name, course).get("data")).size() > 0);
         response.put("code", 200);
         response.put("data", response_data);
         return response;
@@ -528,17 +545,19 @@ public class OpenPlatformAPI {
     @RequestMapping(value="/API/questionList", method=RequestMethod.GET)
     public Map<String, Object> questionList(
             @RequestParam(value="name") String name,
-            @RequestParam(value="course") String course){
+            @RequestParam(value="course") String course) throws UnsupportedEncodingException {
         //传入参数并发出get请求
-        Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userInformationUtil.getUserId());
-        param_map.put("name", name);
-        param_map.put("course", course);
+
         RestTemplate restTemplate = new RestTemplate();
-        Map<String, Object>questionResult = restTemplate.getForObject(
-                siteUrl + "/questionListByUriName?id={id}&uriName={name}",
-                Map.class,
-                param_map);
+        String name_without_space = name.replace(" ", "+");
+        String url = siteUrl + "/questionListByUriName?";
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(url)
+                .queryParam("id", userInformationUtil.getUserId())
+                .queryParam("uriName", URLEncoder.encode(name_without_space, "UTF-8"));
+        URI uri = builder.build(true).toUri();
+        System.out.println(uri);
+        Map<String, Object> questionResult = restTemplate.getForObject(uri, Map.class);
         List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
         Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
 
