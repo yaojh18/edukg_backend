@@ -6,6 +6,10 @@ import com.example.edukg_backend.Service.InstanceService;
 import com.example.edukg_backend.Service.UserService;
 import com.example.edukg_backend.Util.PinyinUtil;
 import com.example.edukg_backend.Util.UserInformationUtil;
+import de.siegmar.fastcsv.reader.CsvParser;
+import de.siegmar.fastcsv.reader.CsvReader;
+import de.siegmar.fastcsv.reader.CsvRow;
+import jdk.jfr.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
@@ -25,6 +29,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -121,8 +127,64 @@ public class OpenPlatformAPI {
     @ResponseBody
     @RequestMapping(value="API/homeList")
     public ResponseEntity<Map<String, Object>> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
+        /*
         String searchKey = defaultSearchKey.get(course);
         return this.instanceList(searchKey, course, "default", "default", null);
+         */
+        File file = new File(System.getProperty("user.dir") + "\\src\\main\\resources" + "\\static\\" + course + "-partial.csv");
+        CsvReader csvReader = new CsvReader();
+        Map<String, Object>data = new HashMap<>();
+        List<Map<String, Object>>response_list = new ArrayList<>();
+        Map<String, Map<String, Object>>uri2LabelAndType = new HashMap<>();
+        Map<String, String>classUri2Label = new HashMap<>();
+        try (CsvParser csvParser = csvReader.parse(file, StandardCharsets.UTF_8)) {
+            CsvRow row;
+            while ((row = csvParser.nextRow()) != null) {
+                String s = row.getField(0);
+                String o = row.getField(1);
+                String p = row.getField(2);
+                if(s.startsWith("http://edukb.org/knowledge/0.1/instance/")){
+                    if(o.equals("http://www.w3.org/2000/01/rdf-schema#label")) {
+                        if (uri2LabelAndType.get(s) == null) {
+                            Map<String, Object> temp_map = new HashMap<>();
+                            temp_map.put("label", p);
+                            temp_map.put("course", course);
+                            uri2LabelAndType.put(s, temp_map);
+                        } else {
+                            uri2LabelAndType.get(s).put("label", p);
+                        }
+                    }
+                    else if(o.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") && !p.endsWith("NamedIndividual")){
+                        if (uri2LabelAndType.get(s) == null) {
+                            Map<String, Object> temp_map = new HashMap<>();
+                            temp_map.put("category", p);
+                            temp_map.put("course", course);
+                            uri2LabelAndType.put(s, temp_map);
+                        } else {
+                            uri2LabelAndType.get(s).put("category", p);
+                        }
+                    }
+                }
+                else if(s.startsWith("http://edukb.org/knowledge/0.1/class/") && o.equals("http://www.w3.org/2000/01/rdf-schema#label")){
+                    classUri2Label.put(row.getField(0), row.getField(2));
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        uri2LabelAndType.forEach((key, value) ->{
+            if(value.get("category") !=null && classUri2Label.get(value.get("category")) != null){
+                value.put("category", classUri2Label.get(value.get("category")));
+                response_list.add(value);
+            }
+        });
+        Map<String, Object>temp_map_result = new HashMap<>();
+        temp_map_result.put("result",response_list);
+        temp_map_result.put("result_size", response_list.size());
+        data.put("data", temp_map_result);
+        data.put("code", 200);
+        return new ResponseEntity<>(data, HttpStatus.OK);
+
     }
 
     /**
