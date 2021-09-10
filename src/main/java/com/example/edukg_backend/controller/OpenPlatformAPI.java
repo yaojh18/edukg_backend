@@ -13,12 +13,16 @@ import jdk.jfr.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.ClassUtils;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -29,14 +33,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -126,18 +130,22 @@ public class OpenPlatformAPI {
      */
     @ResponseBody
     @RequestMapping(value="API/homeList")
-    public ResponseEntity<Map<String, Object>> homeList(@RequestParam(value="course", defaultValue="chinese")String course){
+    public ResponseEntity<Map<String, Object>> homeList(@RequestParam(value="course", defaultValue="chinese")String course) throws URISyntaxException, IOException {
         /*
         String searchKey = defaultSearchKey.get(course);
         return this.instanceList(searchKey, course, "default", "default", null);
          */
-        File file = new File(System.getProperty("user.dir") + "\\src\\main\\resources" + "\\static\\" + course + "-partial.csv");
+        //File file = new File(ResourceUtils.getURL("classpath:").getPath() + "/static/" + course + "-partial.csv");
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        //读取csv文件
+        InputStream stream = resourceLoader.getResource("classpath:static/" + course + "-partial.csv").getInputStream();  //文件名
+        InputStreamReader reader = new InputStreamReader(stream, StandardCharsets.UTF_8);
         CsvReader csvReader = new CsvReader();
         Map<String, Object>data = new HashMap<>();
         List<Map<String, Object>>response_list = new ArrayList<>();
         Map<String, Map<String, Object>>uri2LabelAndType = new HashMap<>();
         Map<String, String>classUri2Label = new HashMap<>();
-        try (CsvParser csvParser = csvReader.parse(file, StandardCharsets.UTF_8)) {
+        try (CsvParser csvParser = csvReader.parse(reader)) {
             CsvRow row;
             while ((row = csvParser.nextRow()) != null) {
                 String s = row.getField(0);
