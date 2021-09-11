@@ -532,15 +532,9 @@ public class OpenPlatformAPI {
     public Map<String, Object> infoByInstanceName(
             @RequestParam(value="name") String name,
             @RequestParam(value="course") String course,
-            @RequestParam(value="token", required = false) String token) throws URISyntaxException, UnsupportedEncodingException {
+            @RequestParam(value="token", required = false) String token) throws URISyntaxException, UnsupportedEncodingException, InterruptedException {
         //传入参数并发出get请求
 
-        /*
-        Map<String, String> param_map = new HashMap<>();
-        param_map.put("id", userInformationUtil.getUserId());
-        param_map.put("name", name_without_space);
-        param_map.put("course", course);
-        */
         String url = siteUrl + "/infoByInstanceName?";
         String name_without_space = name.replace(" ", "+");
         RestTemplate restTemplate = new RestTemplate();
@@ -554,7 +548,7 @@ public class OpenPlatformAPI {
 
         Map<String, Object> response_data = new HashMap<>();
         Map<String, Object> result_data = (Map<String, Object>) result.get("data");
-        System.out.println("result is" + result);
+        //System.out.println("result is" + result);
         response_data.put("description", "");
         response_data.put("img", "");
         List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
@@ -599,22 +593,35 @@ public class OpenPlatformAPI {
         String category = this.getInstanceCategory(name, course);
         instanceService.setInstanceCategory(name, course, category);
         instanceService.addAccessCount(name,course);
-
+        //List<Map<String, Object>> q = (List<Map<String, Object>>)questionList(name, course).get("data");
         if(token == null){
             response_data.put("isFavorite", false);
         }
         else{
             response_data.put("isFavorite", userService.checkFavorites(token, name, course));
             userService.addHistories(token, name, course);
+            System.out.println("start find question in " + name);
+            //userService.addQuestionByQuestionList(token, name, course, q);
+            userService.addQuestionByInstance(token, name, course);
+            System.out.println("end find question");
+
+            Random rand = new Random();
+            Map<String, Object> e = relationship.get(rand.nextInt(relationship.size()));
+            String secondLevelName = (String)(e.get("subject_label") == null ? e.get("object_label") : e.get("subject_label"));
+            System.out.println("start find question in " + name);
+            //userService.addQuestionByQuestionList(token, name, course, q);
+            userService.addQuestionByInstance(token, name, course);
+            System.out.println("end find question");
         }
         response_data.put("property", property);
         response_data.put("relationship", relationship);
         Map<String, Object> response = new HashMap<>();
-        response_data.put("hasQuestion", ((List)questionList(name, course).get("data")).size() > 0);
+        //response_data.put("hasQuestion", q.size() > 0);
         response.put("code", 200);
         response.put("data", response_data);
         return response;
     }
+
 
 
     /**
@@ -663,19 +670,23 @@ public class OpenPlatformAPI {
         Map<String, Object> questionResult = restTemplate.getForObject(uri, Map.class);
         List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
         Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
+        Pattern answerPattern = Pattern.compile("(.*)([ABCD])(.*)");
 
         Iterator<Map<String, Object>> question_iterator = questionList.iterator();
         while(question_iterator.hasNext()){
             Map<String, Object> element = question_iterator.next();
             element.remove("id");
             String questionBody = (String)element.get("qBody");
+            String answer = (String)element.get("qAnswer");
+            Matcher answerMatcher = answerPattern.matcher(answer);
             Matcher m = p.matcher(questionBody);
-            if(m.find()) {
+            if(m.find() && answerMatcher.find()) {
                 element.put("qBody", m.group(1));
                 element.put("A", m.group(2));
                 element.put("B", m.group(3));
                 element.put("C", m.group(4));
                 element.put("D", m.group(5));
+                element.put("qAnswer", answerMatcher.group(2));
             }
             else{
                 question_iterator.remove();

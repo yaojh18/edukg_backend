@@ -3,10 +3,8 @@ package com.example.edukg_backend.Models;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.security.PrivilegedAction;
+import java.util.*;
 
 @Entity
 @Table(name="tab_user")
@@ -40,7 +38,23 @@ public class User {
     )
     private Set<CourseInstance> favorites = new HashSet<>();
 
+    @JsonIgnore
+    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_recommend_question",
+            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
+            inverseJoinColumns = {@JoinColumn(name = "question_id", referencedColumnName = "id")}
+    )
+    private List<Question> recommendQuestion = new ArrayList<>();
 
+    @JsonIgnore
+    @ManyToMany(targetEntity = CourseInstance.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "tab_user_recommendInstance",
+            joinColumns = {@JoinColumn(name="user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "instance_id")}
+    )
+    private Set<CourseInstance> recommendInstance = new HashSet<>();
 
     // private List<Map<String, Object>> history;
     // private List<Map<String, Object>> star;
@@ -80,6 +94,30 @@ public class User {
 
     public void addFavorites(CourseInstance courseInstance){
         favorites.add(courseInstance);
+    }
+
+    public void addRecommendQuestion(Question question){
+        recommendQuestion.add(question);
+    }
+
+    public void addRecommendInstance(CourseInstance courseInstance){recommendInstance.add(courseInstance);}
+
+    public Set<CourseInstance> getRecommendInstance(){
+        return recommendInstance;
+    }
+
+    public boolean hasRecommendInstance(CourseInstance courseInstance){
+        for(CourseInstance c: recommendInstance){
+            // System.out.println(c.getId());
+            if(Objects.equals(c.getId(), courseInstance.getId()))
+                return true;
+        }
+        return false;
+    }
+
+
+    public List<Question> getRecommendQuestion(){
+        return recommendQuestion;
     }
 
     @Override

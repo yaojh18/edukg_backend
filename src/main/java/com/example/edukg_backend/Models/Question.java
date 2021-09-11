@@ -15,6 +15,7 @@ public class Question {
     @Column(name = "id")
     private Long id;
     // private User user;
+    @Column(columnDefinition = "varchar(1000)")
     private String questionBody;
     private String answer;
     private String instanceName;

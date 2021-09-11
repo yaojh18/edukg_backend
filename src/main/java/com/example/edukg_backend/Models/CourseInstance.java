@@ -28,6 +28,9 @@ public class CourseInstance {
     @JsonIgnore
     @ManyToMany(mappedBy = "favorites")
     private  Set<User> lovers = new HashSet<>();
+    @JsonIgnore
+    @ManyToMany(mappedBy = "recommendQuestion")
+    private Set<User> recommendObject = new HashSet<>();
 
     @OneToMany(targetEntity = CourseInstance.class)
     private List<InstanceComment> commentList = new ArrayList<>();

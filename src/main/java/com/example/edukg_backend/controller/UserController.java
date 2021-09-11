@@ -263,34 +263,7 @@ public class UserController {
     public ResponseEntity<Map<String, Object>> recommendQuestion(
             @RequestParam(value="token") String token
     ){
-        Map<String, Object> recommend_entity = userService.recommendEntity(token);
-        if(recommend_entity.get("code").equals(400)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(recommend_entity);
-        }
-        Random rand = new Random();
-        System.out.println(token);
-        List<Map<String, Object>> recommend_entity_list = (List<Map<String, Object>>)recommend_entity.get("data");
-        List<Map<String, Object>> recommend_question_list = new ArrayList<>();
-        Set<String> questionBodySet = new HashSet<>();
-
-        for(Map<String, Object> element: recommend_entity_list){
-            System.out.println(element);
-            if(recommend_question_list.size() >= 3)
-                break;
-            getRandomQuestionByEntity(element, rand, recommend_question_list, questionBodySet);
-            if(element.get("needMore").equals("true")){
-                Map<String, Object> new_element = getRelatedInstance(element, rand);
-                if((boolean) new_element.get("success")){
-                    getRandomQuestionByEntity(new_element, rand, recommend_question_list, questionBodySet);
-                }
-            }
-        }
-        Map<String, Object> response = new HashMap<>();
-        response.put("code", 200);
-        response.put("data", recommend_question_list);
-
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return userService.getRecommendQuestionList(token, 5);
     }
 
     private void getRandomQuestionByEntity(Map<String, Object> element,

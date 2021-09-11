@@ -2,18 +2,32 @@ package com.example.edukg_backend.Service;
 
 import com.example.edukg_backend.ConfigHelper.DefaultEntityConfig;
 import com.example.edukg_backend.Models.CourseInstance;
+import com.example.edukg_backend.Models.Question;
 import com.example.edukg_backend.Models.User;
+import com.example.edukg_backend.Repositories.QuestionRepository;
 import com.example.edukg_backend.Repositories.UserRepository;
 import com.example.edukg_backend.Util.JwtUtil;
+import com.example.edukg_backend.Util.UserInformationUtil;
 import io.jsonwebtoken.Claims;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 // import org.springframework.web.client.HttpClientErrorException;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import java.beans.Transient;
+import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URLEncoder;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 // import java.util.function.UnaryOperator;
 
 
@@ -25,9 +39,13 @@ public class UserService {
     JwtUtil jwtUtil;
     @Autowired
     InstanceService instanceService;
+    @Autowired
+    QuestionRepository questionRepository;
 
     @Autowired
     DefaultEntityConfig defaultEntityConfig;
+    @Autowired
+    UserInformationUtil userInformationUtil;
 
     public Optional<User> checkToken(String token){
         if(token==null){
@@ -246,7 +264,7 @@ public class UserService {
 
                 addFavoritesAndHistories2Recommend(favList, result_data);
                 addFavoritesAndHistories2Recommend(hisList, result_data);
-                if(result_data.size() < 5){
+                if(result_data.size() < 6){
                     result_data.addAll(defaultEntityConfig.getDefaultEntity());
                 }
                 result.put("data", result_data);
@@ -264,6 +282,177 @@ public class UserService {
             temp.put("course", element.getCourse());
             temp.put("needMore", "true");
             result_data_list.add(temp);
+        }
+    }
+
+    public List<Question> getDefaultQuestion(){
+        return questionRepository.findAllDefault();
+    }
+
+    public ResponseEntity<Map<String, Object>> getRecommendQuestionList(String token, int number) {
+        Map<String, Object> result = new HashMap<>();
+        HttpStatus httpStatus;
+        Optional<User> userOptional = checkToken(token);
+        if(userOptional.isEmpty()){
+            result.put("msg", "用户不存在");
+            httpStatus = HttpStatus.UNAUTHORIZED;
+        }
+        else {
+            User user = userOptional.get();
+            List<Question> temp = user.getRecommendQuestion();
+            if(temp.size() < 5)
+                temp.addAll(questionRepository.findAllDefault());
+            result.put("data", getRandomFromList(temp, number));
+            httpStatus = HttpStatus.OK;
+        }
+
+        result.put("code", httpStatus.value());
+        return  ResponseEntity.status(httpStatus).body(result);
+    }
+
+
+    public List<Map<String, Object>> getRandomFromList(List<Question> questionList, int number){
+        Pattern p = Pattern.compile("(.*)A[.．](.*)B[.．](.*)C[.．](.*)D[.．](.*)");
+        Pattern answerPattern = Pattern.compile("(.*)([ABCD])(.*)");
+        Set<String>questionBodySet = new HashSet<>();
+        List<Map<String, Object>> result = new ArrayList<>();
+        int count = 0;
+        int searchTime = 0;
+        Random rand = new Random();
+        while(count < number && searchTime < 20){
+            Map<String, Object>question = new HashMap<>();
+            searchTime++;
+            Question q = questionList.get(rand.nextInt(questionList.size()));
+            String questionBody = q.getQuestionBody();
+            String answer = q.getAnswer();
+            Matcher m = p.matcher(questionBody);
+            Matcher answerMatcher = answerPattern.matcher(q.getAnswer());
+            if(questionBodySet.contains(questionBody))
+                continue;
+            if(m.find() && answerMatcher.find()){
+                questionBodySet.add(questionBody);
+                question.put("qBody", m.group(1));
+                question.put("A", m.group(2));
+                question.put("B", m.group(3));
+                question.put("C", m.group(4));
+                question.put("D", m.group(5));
+                question.put("qAnswer", answerMatcher.group(2));
+                result.add(question);
+                count++;
+            }
+        }
+        return result;
+    }
+
+    public Question addRecommendQuestion(String qBody,
+                                     String answer,
+                                     String instanceName,
+                                     String course,
+                                     boolean isDefault){
+        Question question = new Question();
+        question.setQuestionBody(qBody);
+        question.setAnswer(answer);
+        question.setInstanceName(instanceName);
+        question.setCourse(course);
+        question.setDefault(isDefault);
+        questionRepository.save(question);
+        return question;
+    }
+
+    public void addRecommendQuestion2User(String token,
+                                          String qBody,
+                                          String answer,
+                                          String instanceName,
+                                          String course,
+                                          boolean isDefault){
+        Optional<User> userOptional = checkToken(token);
+        if(userOptional.isEmpty()){
+            return;
+        }
+        else {
+            User user = userOptional.get();
+            user.addRecommendQuestion(addRecommendQuestion(qBody,answer,instanceName,course,isDefault));
+            userRepository.save(user);
+        }
+
+    }
+
+    @Async("getQuestionExecutor")
+    public void addQuestionByInstance(String token,
+                                      String instanceName,
+                                      String course) {
+
+        try {
+            if(checkOrAddRecommendInstance(token, instanceName, course)){
+                Optional<User> userOptional = checkToken(token);
+                RestTemplate restTemplate = new RestTemplate();
+                String name_without_space = instanceName.replace(" ", "+");
+                String url = "http://open.edukg.cn/opedukg/api/typeOpen/open" + "/questionListByUriName?";
+                UriComponentsBuilder builder = UriComponentsBuilder
+                        .fromUriString(url)
+                        .queryParam("id", userInformationUtil.getUserId())
+                        .queryParam("uriName", URLEncoder.encode(name_without_space, "UTF-8"));
+                URI uri = builder.build(true).toUri();
+                System.out.println(uri);
+                Map<String, Object> questionResult = restTemplate.getForObject(uri, Map.class);
+                List<Map<String, Object>>questionList = (List<Map<String, Object>>) questionResult.get("data");
+                if(userOptional.isEmpty()){
+                    return;
+                }
+                else {
+                    User user = userOptional.get();
+                    for(Map<String, Object> q: questionList){
+                        addRecommendQuestion2User(token, (String)q.get("qBody"), (String)q.get("qAnswer"), instanceName, course, false);
+                        System.out.println("finish adding question " + q.get("qBody") + " for " + instanceName);
+                    }
+                }
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        System.out.println("get test to" + instanceName);
+    }
+
+    @Async("getQuestionExecutor")
+    public void addQuestionByQuestionList(String token, String instanceName, String course, List<Map<String, Object>> questionList){
+        if(checkOrAddRecommendInstance(token, instanceName, course)){
+            Optional<User> userOptional = checkToken(token);
+            if(userOptional.isEmpty()){
+                return;
+            }
+            else {
+                User user = userOptional.get();
+                for(Map<String, Object> q: questionList){
+                    addRecommendQuestion2User(token, (String)q.get("qBody"), (String)q.get("qAnswer"), instanceName, course, false);
+                    System.out.println("finish adding question " + q.get("qBody") + " for " + instanceName);
+                }
+            }
+        }
+
+    }
+
+
+    // true的时候才需要更新
+    public boolean checkOrAddRecommendInstance(String token, String name, String course){
+        CourseInstance courseInstance = instanceService.findOrAddInstance(name,course);
+        System.out.println(courseInstance);
+        Long instanceId = courseInstance.getId();
+        Optional<User> userOptional = checkToken(token);
+        if(userOptional.isEmpty()){
+            return false;
+        }
+        else {
+            User user = userOptional.get();
+            //Set<CourseInstance> c = user.getRecommendInstance();
+            if(user.hasRecommendInstance(courseInstance)){
+                System.out.println("has visit");
+                return false;
+            }
+            else{
+                user.addRecommendInstance(courseInstance);
+                userRepository.save(user);
+                return true;
+            }
         }
     }
 }
