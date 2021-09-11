@@ -243,12 +243,14 @@ public class OpenPlatformAPI {
      *       {
      *         "label": 搜索到的实体名称1,
      *         "category": 搜索到的实体所属类1,
-     *         "course": 所属学科
+     *         "course": 所属学科,
+     *         "img": url或""(没有图片时)
      *       },
      *       {
      *         "label": 搜索到的实体名称2,
      *         "category":搜索到的实体所属类2,
-     *         "course":所属学科
+     *         "course":所属学科,
+     *         "img": url或""(没有图片时)
      *       },
      *       ...
      *     ],
