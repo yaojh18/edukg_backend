@@ -40,6 +40,8 @@ public class User {
     )
     private Set<CourseInstance> favorites = new HashSet<>();
 
+
+
     // private List<Map<String, Object>> history;
     // private List<Map<String, Object>> star;
     // backend

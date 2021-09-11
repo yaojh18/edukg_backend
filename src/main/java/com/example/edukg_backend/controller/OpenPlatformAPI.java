@@ -77,6 +77,32 @@ public class OpenPlatformAPI {
         return restTemplate.postForObject(url, httpEntity, Map.class);
     }
 
+    private String getInstanceImage(String name, String course){
+        try {
+            String url = siteUrl + "/infoByInstanceName?";
+            String name_without_space = name.replace(" ", "+");
+            RestTemplate restTemplate = new RestTemplate();
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromUriString(url)
+                    .queryParam("id", userInformationUtil.getUserId())
+                    .queryParam("name", URLEncoder.encode(name_without_space, "UTF-8"))
+                    .queryParam("course", course);
+            URI uri = builder.build(true).toUri();
+            Map<String, Object> result = restTemplate.getForObject(uri, Map.class);
+            Map<String, Object> result_data = (Map<String, Object>) result.get("data");
+            List<Map<String, Object>> property = (List<Map<String, Object>>) result_data.get("property");
+            for (Map<String, Object> element : property) {
+                if (element.get("predicate").equals("http://edukg.org/knowledge/0.1/property/common#image")) {
+                    return (String) element.get("object");
+                }
+            }
+            return "";
+        }
+        catch (Exception e){
+            return "";
+        }
+    }
+
     private String getInstanceCategory(String name, String course){
         Map<String, String> param_map = new HashMap<>();
         param_map.put("id", userInformationUtil.getUserId());
@@ -324,6 +350,12 @@ public class OpenPlatformAPI {
                 });
             }
 
+            if(response_data.size()<=13){
+                for (Map<String, Object>element: response_data){
+                    element.put("img", getInstanceImage((String) element.get("label"), course));
+                }
+            }
+
             Map<String, Object> response = new HashMap<>();
             Map<String, Object> response_data_and_size = new HashMap<>();
             response_data_and_size.put("result", response_data);
@@ -516,7 +548,6 @@ public class OpenPlatformAPI {
                 .queryParam("name", URLEncoder.encode(name_without_space, "UTF-8"))
                 .queryParam("course", course);
         URI uri = builder.build(true).toUri();
-        System.out.println(uri);
         Map<String, Object> result = restTemplate.getForObject(uri, Map.class);
 
         Map<String, Object> response_data = new HashMap<>();
