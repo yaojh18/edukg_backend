@@ -171,15 +171,17 @@ public class OpenPlatformAPI {
         List<Map<String, Object>>response_list = new ArrayList<>();
         Map<String, Map<String, Object>>uri2LabelAndType = new HashMap<>();
         Map<String, String>classUri2Label = new HashMap<>();
+        int total = 0;
         try (CsvParser csvParser = csvReader.parse(reader)) {
             CsvRow row;
-            while ((row = csvParser.nextRow()) != null) {
+            while ((row = csvParser.nextRow()) != null && total < 100000) {
                 String s = row.getField(0);
                 String o = row.getField(1);
                 String p = row.getField(2);
                 if(s.startsWith("http://edukb.org/knowledge/0.1/instance/")){
                     if(o.equals("http://www.w3.org/2000/01/rdf-schema#label")) {
                         if (uri2LabelAndType.get(s) == null) {
+                            total++;
                             Map<String, Object> temp_map = new HashMap<>();
                             temp_map.put("label", p);
                             temp_map.put("course", course);
@@ -190,6 +192,7 @@ public class OpenPlatformAPI {
                     }
                     else if(o.equals("http://www.w3.org/1999/02/22-rdf-syntax-ns#type") && !p.endsWith("NamedIndividual")){
                         if (uri2LabelAndType.get(s) == null) {
+                            total++;
                             Map<String, Object> temp_map = new HashMap<>();
                             temp_map.put("category", p);
                             temp_map.put("course", course);
@@ -213,8 +216,15 @@ public class OpenPlatformAPI {
             }
         });
         Map<String, Object>temp_map_result = new HashMap<>();
-        temp_map_result.put("result",response_list);
-        temp_map_result.put("result_size", response_list.size());
+        List<Map<String, Object>> sublist;
+        try {
+            sublist = response_list.subList(0, 200);
+        }
+        catch (IndexOutOfBoundsException e){
+            sublist = response_list;
+        }
+        temp_map_result.put("result",sublist);
+        temp_map_result.put("result_size", sublist.size());
         data.put("data", temp_map_result);
         data.put("code", 200);
         return new ResponseEntity<>(data, HttpStatus.OK);
