@@ -610,17 +610,18 @@ public class OpenPlatformAPI {
         else{
             response_data.put("isFavorite", userService.checkFavorites(token, name, course));
             userService.addHistories(token, name, course);
-            System.out.println("start find question in " + name);
-            //userService.addQuestionByQuestionList(token, name, course, q);
-            userService.addQuestionByInstance(token, name, course);
-            System.out.println("end find question");
-
-            Random rand = new Random();
-            Map<String, Object> e = relationship.get(rand.nextInt(relationship.size()));
-            String secondLevelName = (String)(e.get("subject_label") == null ? e.get("object_label") : e.get("subject_label"));
-            System.out.println("start find question in " + name);
-            //userService.addQuestionByQuestionList(token, name, course, q);
-            userService.addQuestionByInstance(token, name, course);
+            String secondLevelName;
+            try {
+                System.out.println("start find question in " + name);
+                Random rand = new Random();
+                Map<String, Object> e = relationship.get(rand.nextInt(relationship.size()));
+                secondLevelName = (String) (e.get("subject_label") == null ? e.get("object_label") : e.get("subject_label"));
+                System.out.println("start find question in " + secondLevelName);
+            }
+            catch (Exception e){
+                secondLevelName = "";
+            }
+            userService.addQuestionBy2Instance(token, name, secondLevelName, course);
             System.out.println("end find question");
         }
         response_data.put("property", property);

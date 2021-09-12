@@ -21,7 +21,7 @@ public class AsyncConfiguration {
         executor.setMaxPoolSize(20);
         // 缓冲队列：用来缓冲执行任务的队列
         executor.setQueueCapacity(500);
-        // 允许线程的空闲时间60秒：当超过了核心线程之外的线程在空闲时间到达之后会被销毁
+        // 允许线程的空闲时间20秒：当超过了核心线程之外的线程在空闲时间到达之后会被销毁
         executor.setKeepAliveSeconds(60);
         // 线程池名的前缀：设置好了之后可以方便我们定位处理任务所在的线程池
         executor.setThreadNamePrefix("get-question-thread-");

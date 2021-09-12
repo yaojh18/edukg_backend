@@ -2,6 +2,7 @@ package com.example.edukg_backend;
 
 import com.example.edukg_backend.ConfigHelper.DefaultEntityConfig;
 import com.example.edukg_backend.Service.UserService;
+import com.example.edukg_backend.Util.RecommendUtil;
 import com.example.edukg_backend.Util.UserInformationUtil;
 import com.example.edukg_backend.controller.OpenPlatformAPI;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,7 @@ public class EdukgApplicationRunner implements ApplicationRunner {
     private String password;
     @Autowired
     DefaultEntityConfig defaultEntityConfig;
+
 
     @Override
     public void run(ApplicationArguments args) throws  Exception{

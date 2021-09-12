@@ -39,11 +39,11 @@ public class User {
     private Set<CourseInstance> favorites = new HashSet<>();
 
     @JsonIgnore
-    @OneToMany(cascade = {CascadeType.ALL}, fetch = FetchType.EAGER)
+    @OneToMany(targetEntity = Question.class, cascade = CascadeType.MERGE, fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_recommend_question",
-            joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")},
-            inverseJoinColumns = {@JoinColumn(name = "question_id", referencedColumnName = "id")}
+            joinColumns = {@JoinColumn(name = "user_id")},
+            inverseJoinColumns = {@JoinColumn(name = "question_id")}
     )
     private List<Question> recommendQuestion = new ArrayList<>();
 
@@ -108,7 +108,7 @@ public class User {
 
     public boolean hasRecommendInstance(CourseInstance courseInstance){
         for(CourseInstance c: recommendInstance){
-            // System.out.println(c.getId());
+            System.out.println(c.getId());
             if(Objects.equals(c.getId(), courseInstance.getId()))
                 return true;
         }
