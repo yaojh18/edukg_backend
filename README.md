@@ -1,5 +1,5 @@
 # edukg_backend
-[toc]
+
 ## 1 后端平台使用
 ### 1.0 mysql权限设置
 我mysql版本是8.0.13
